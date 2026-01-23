@@ -1,0 +1,7 @@
+[
+{
+  "directory": "C:/ENEL400/microBlaze/sw/uart_hello/build",
+  "command": "C:\\Xilinx\\2025.1\\Vitis\\gnu\\riscv\\nt\\riscv64-unknown-elf\\bin\\riscv64-unknown-elf-gcc.exe -isystem C:/ENEL400/microBlaze/sw/microblaze_platform/export/microblaze_platform/sw/standalone_microblaze_riscv_0/include -isystem C:/Xilinx/2025.1/gnu/riscv/nt/riscv64-unknown-elf/x86_64-w64-mingw32/usr/lib/riscv32-xilinx-elf/gcc/riscv32-xilinx-elf/13.3.0/include -isystem C:/Xilinx/2025.1/gnu/riscv/nt/riscv64-unknown-elf/x86_64-w64-mingw32/usr/lib/riscv32-xilinx-elf/gcc/riscv32-xilinx-elf/13.3.0/include-fixed -isystem C:/Xilinx/2025.1/Vitis/gnu/riscv/nt/riscv64-unknown-elf/riscv32-xilinx-elf/usr/include   -march=rv32imc_zicsr_zifencei -mabi=ilp32 -DSDT  -MMD -MP  -specs=C:/ENEL400/microBlaze/sw/microblaze_platform/export/microblaze_platform/sw/standalone_microblaze_riscv_0/Xilinx.spec -IC:/ENEL400/microBlaze/sw/microblaze_platform/export/microblaze_platform/sw/standalone_microblaze_riscv_0/include -Wall -Wextra      -O0  -g3     -U__clang__ -o CMakeFiles\\uart_hello.elf.dir\\main.c.obj -c C:\\ENEL400\\microBlaze\\sw\\uart_hello\\src\\main.c",
+  "file": "C:\\ENEL400\\microBlaze\\sw\\uart_hello\\src\\main.c"
+}
+]
