@@ -22,12 +22,16 @@ Thumbs.db
 .vscode/
 
 # Vivado project internals (specific)
-hw/microBlaze/.Xil/
-hw/microBlaze/*.runs/
-hw/microBlaze/*.cache/
-hw/microBlaze/*.sim/
-hw/microBlaze/*.hw/
-hw/microBlaze/*.ip_user_files/
+hw/microV/.Xil/
+hw/microV/*.runs/
+hw/microV/*.cache/
+hw/microV/*.sim/
+hw/microV/*.hw/
+hw/microV/*.ip_user_files/
 
 # Vivado project folder (local build container)
-hw/microBlaze/
+hw/microV/
+
+
+# all software for now
+sw/
