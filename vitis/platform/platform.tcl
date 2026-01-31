@@ -21,3 +21,8 @@ platform clean
 platform generate
 platform clean
 platform generate
+platform active {platform}
+platform config -updatehw {C:/ENEL400/microBlaze/hw/microV/top.xsa}
+platform clean
+platform generate
+platform generate -domains 

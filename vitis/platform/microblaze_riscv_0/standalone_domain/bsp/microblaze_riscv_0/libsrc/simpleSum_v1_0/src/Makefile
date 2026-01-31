@@ -1,28 +1,26 @@
-# Vitis passes these in. Keep them parametric.
-COMPILER ?= riscv32-xilinx-elf-gcc
-ARCHIVER ?= riscv32-xilinx-elf-ar
-CP       ?= copy
+COMPILER=
+ARCHIVER=
+CP=cp
+COMPILER_FLAGS=
+EXTRA_COMPILER_FLAGS=
+LIB=libxil.a
 
-LIB = libxil.a
+RELEASEDIR=../../../lib
+INCLUDEDIR=../../../include
+INCLUDES=-I./. -I${INCLUDEDIR}
 
-RELEASEDIR = ..\..\..\lib
-INCLUDEDIR = ..\..\..\include
-INCLUDES   = -I. -I$(INCLUDEDIR)
+INCLUDEFILES := $(wildcard *.h)
+LIBSOURCES   := $(wildcard *.c)
+OUTS         := $(LIBSOURCES:.c=.o)
 
-CFILES = $(wildcard *.c)
-OFILES = $(CFILES:.c=.o)
-HFILES = $(wildcard *.h)
-
-libs: $(OFILES)
-	@echo Archiving simpleSum...
-	$(ARCHIVER) -r $(RELEASEDIR)\$(LIB) $(OFILES)
-
-%.o: %.c
-	@echo Compiling $<
-	$(COMPILER) $(COMPILER_FLAGS) $(EXTRA_COMPILER_FLAGS) $(INCLUDES) -c $< -o $@
+libs:
+	@echo Compiling simpleSum...
+	$(COMPILER) $(COMPILER_FLAGS) $(EXTRA_COMPILER_FLAGS) $(INCLUDES) -c $(LIBSOURCES)
+	$(ARCHIVER) -r $(RELEASEDIR)/$(LIB) $(OUTS)
+	make clean
 
 include:
-	-$(CP) $(HFILES) $(INCLUDEDIR)
+	$(CP) $(INCLUDEFILES) $(INCLUDEDIR)
 
 clean:
-	-del /q $(OFILES) 2>nul
+	rm -rf $(OUTS)

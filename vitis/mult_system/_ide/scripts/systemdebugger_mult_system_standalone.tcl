@@ -11,9 +11,9 @@
 # 
 connect -url tcp:127.0.0.1:3121
 targets -set -filter {jtag_cable_name =~ "Digilent Basys3 210183BD3E2DA" && level==0 && jtag_device_ctx=="jsn-Basys3-210183BD3E2DA-0362d093-0"}
-fpga -file C:/ENEL400/microBlaze/vitis/mult/_ide/bitstream/letsTry.bit
+fpga -file C:/ENEL400/microBlaze/vitis/mult/_ide/bitstream/top.bit
 targets -set -nocase -filter {name =~ "*Hart*#0"}
-loadhw -hw C:/ENEL400/microBlaze/vitis/platform/export/platform/hw/letsTry.xsa -regs
+loadhw -hw C:/ENEL400/microBlaze/vitis/platform/export/platform/hw/top.xsa -regs
 targets -set -nocase -filter {name =~ "*Hart*#0"}
 rst -system
 after 3000
