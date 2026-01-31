@@ -1,0 +1,40 @@
+#include <stdio.h>
+#include "xil_io.h"
+#include "xparameters.h"
+#include "sleep.h"
+
+// CHANGE THIS to your real base address
+#define BASE_ADDR 0x44A00000
+
+#define REG_CTRL   0x00
+#define REG_STATUS 0x04
+#define REG_B      0x08
+#define REG_C      0x0C
+#define REG_OUT    0x10
+
+int main()
+{
+    printf("Toy IP test starting...\n");
+
+    // Write inputs
+    Xil_Out32(BASE_ADDR + REG_B, 6);
+    Xil_Out32(BASE_ADDR + REG_C, 7);
+
+    // Start accelerator
+    Xil_Out32(BASE_ADDR + REG_CTRL, 1);
+
+    // Wait for DONE
+    while ((Xil_In32(BASE_ADDR + REG_STATUS) & 0x1) == 0);
+
+    // Read result
+    int result = Xil_In32(BASE_ADDR + REG_OUT);
+
+    printf("Result = %d (expected 42)\n", result);
+
+    // Clear START (important since HW no longer clears it)
+    Xil_Out32(BASE_ADDR + REG_CTRL, 0);
+
+    while(1);
+
+    return 0;
+}

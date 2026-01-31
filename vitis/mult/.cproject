@@ -1,0 +1,376 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<?fileVersion 4.0.0?><cproject storage_type_id="org.eclipse.cdt.core.XmlProjectDescriptionStorage">
+    	
+    <storageModule moduleId="org.eclipse.cdt.core.settings">
+        		
+        <cconfiguration id="xilinx.gnu.riscv.exe.debug.162840026">
+            			
+            <storageModule buildSystemId="org.eclipse.cdt.managedbuilder.core.configurationDataProvider" id="xilinx.gnu.riscv.exe.debug.162840026" moduleId="org.eclipse.cdt.core.settings" name="Debug">
+                				
+                <externalSettings/>
+                				
+                <extensions>
+                    					
+                    <extension id="com.xilinx.sdk.managedbuilder.XELF.riscv" point="org.eclipse.cdt.core.BinaryParser"/>
+                    					
+                    <extension id="org.eclipse.cdt.core.GASErrorParser" point="org.eclipse.cdt.core.ErrorParser"/>
+                    					
+                    <extension id="org.eclipse.cdt.core.GmakeErrorParser" point="org.eclipse.cdt.core.ErrorParser"/>
+                    					
+                    <extension id="org.eclipse.cdt.core.GLDErrorParser" point="org.eclipse.cdt.core.ErrorParser"/>
+                    					
+                    <extension id="org.eclipse.cdt.core.CWDLocator" point="org.eclipse.cdt.core.ErrorParser"/>
+                    					
+                    <extension id="org.eclipse.cdt.core.GCCErrorParser" point="org.eclipse.cdt.core.ErrorParser"/>
+                    				
+                </extensions>
+                			
+            </storageModule>
+            			
+            <storageModule moduleId="cdtBuildSystem" version="4.0.0">
+                				
+                <configuration artifactExtension="elf" artifactName="${ProjName}" buildArtefactType="org.eclipse.cdt.build.core.buildArtefactType.exe" buildProperties="org.eclipse.cdt.build.core.buildArtefactType=org.eclipse.cdt.build.core.buildArtefactType.exe,org.eclipse.cdt.build.core.buildType=org.eclipse.cdt.build.core.buildType.debug" cleanCommand="rm -rf" description="" id="xilinx.gnu.riscv.exe.debug.162840026" name="Debug" parent="xilinx.gnu.riscv.exe.debug">
+                    					
+                    <folderInfo id="xilinx.gnu.riscv.exe.debug.162840026." name="/" resourcePath="">
+                        						
+                        <toolChain id="xilinx.gnu.riscv.exe.debug.toolchain.932362396" name="Vitis RISC-V GNU Toolchain" superClass="xilinx.gnu.riscv.exe.debug.toolchain">
+                            							
+                            <targetPlatform binaryParser="com.xilinx.sdk.managedbuilder.XELF.riscv" id="xilinx.riscv.target.gnu.base.debug.244461595" isAbstract="false" name="Debug Platform" superClass="xilinx.riscv.target.gnu.base.debug"/>
+                            							
+                            <builder buildPath="${workspace_loc:/mult}/Debug" enableAutoBuild="true" id="xilinx.gnu.riscv.toolchain.builder.debug.169288155" managedBuildOn="true" name="GNU make.Debug" superClass="xilinx.gnu.riscv.toolchain.builder.debug"/>
+                            							
+                            <tool id="xilinx.gnu.riscv.c.toolchain.assembler.debug.1786999906" name="RISC-V gcc assembler" superClass="xilinx.gnu.riscv.c.toolchain.assembler.debug">
+                                								
+                                <inputType id="xilinx.gnu.assembler.input.1891364927" superClass="xilinx.gnu.assembler.input"/>
+                                							
+                            </tool>
+                            							
+                            <tool id="xilinx.gnu.riscv.c.toolchain.compiler.debug.689432837" name="RISC-V gcc compiler" superClass="xilinx.gnu.riscv.c.toolchain.compiler.debug">
+                                								
+                                <option defaultValue="gnu.c.optimization.level.none" id="xilinx.gnu.compiler.option.optimization.level.793946319" superClass="xilinx.gnu.compiler.option.optimization.level" valueType="enumerated"/>
+                                								
+                                <option id="xilinx.gnu.compiler.option.debugging.level.994425659" superClass="xilinx.gnu.compiler.option.debugging.level" useByScannerDiscovery="false" value="gnu.c.debugging.level.max" valueType="enumerated"/>
+                                								
+                                <option id="xilinx.gnu.riscv.compiler.inferred.arch.81657897" superClass="xilinx.gnu.riscv.compiler.inferred.arch" value="-march=rv32i" valueType="string"/>
+                                								
+                                <option id="xilinx.gnu.riscv.compiler.inferred.abi.1988664268" superClass="xilinx.gnu.riscv.compiler.inferred.abi" value="-mabi=ilp32" valueType="string"/>
+                                								
+                                <option id="xilinx.gnu.riscv.compiler.inferred.garbage.2089756040" superClass="xilinx.gnu.riscv.compiler.inferred.garbage" value="true" valueType="boolean"/>
+                                								
+                                <option id="xilinx.gnu.compiler.inferred.swplatform.includes.1484107207" superClass="xilinx.gnu.compiler.inferred.swplatform.includes" valueType="includePath">
+                                    									
+                                    <listOptionValue builtIn="false" value="${resolvePlatformFile:project=mult,fileType=bspInclude}"/>
+                                    								
+                                </option>
+                                								
+                                <inputType id="xilinx.gnu.riscv.c.compiler.input.2138981309" name="C source files" superClass="xilinx.gnu.riscv.c.compiler.input"/>
+                                							
+                            </tool>
+                            							
+                            <tool id="xilinx.gnu.riscv.cxx.toolchain.compiler.debug.1680414942" name="RISC-V g++ compiler" superClass="xilinx.gnu.riscv.cxx.toolchain.compiler.debug">
+                                								
+                                <option defaultValue="gnu.c.optimization.level.none" id="xilinx.gnu.compiler.option.optimization.level.693227023" superClass="xilinx.gnu.compiler.option.optimization.level" valueType="enumerated"/>
+                                								
+                                <option id="xilinx.gnu.compiler.option.debugging.level.1979608886" superClass="xilinx.gnu.compiler.option.debugging.level" useByScannerDiscovery="false" value="gnu.c.debugging.level.max" valueType="enumerated"/>
+                                								
+                                <option id="xilinx.gnu.riscv.compiler.inferred.arch.177146539" superClass="xilinx.gnu.riscv.compiler.inferred.arch" value="-march=rv32i" valueType="string"/>
+                                								
+                                <option id="xilinx.gnu.riscv.compiler.inferred.abi.1627992139" superClass="xilinx.gnu.riscv.compiler.inferred.abi" value="-mabi=ilp32" valueType="string"/>
+                                								
+                                <option id="xilinx.gnu.riscv.compiler.inferred.garbage.1003932505" superClass="xilinx.gnu.riscv.compiler.inferred.garbage" value="true" valueType="boolean"/>
+                                								
+                                <option id="xilinx.gnu.compiler.inferred.swplatform.includes.1664896204" superClass="xilinx.gnu.compiler.inferred.swplatform.includes" valueType="includePath">
+                                    									
+                                    <listOptionValue builtIn="false" value="${resolvePlatformFile:project=mult,fileType=bspInclude}"/>
+                                    								
+                                </option>
+                                							
+                            </tool>
+                            							
+                            <tool id="xilinx.gnu.riscv.toolchain.archiver.1704349546" name="RISC-V archiver" superClass="xilinx.gnu.riscv.toolchain.archiver"/>
+                            							
+                            <tool id="xilinx.gnu.riscv.c.toolchain.linker.debug.881568791" name="RISC-V gcc linker" superClass="xilinx.gnu.riscv.c.toolchain.linker.debug">
+                                								
+                                <option id="xilinx.gnu.riscv.linker.inferred.arch.19235604" superClass="xilinx.gnu.riscv.linker.inferred.arch" value="-march=rv32i" valueType="string"/>
+                                								
+                                <option id="xilinx.gnu.riscv.linker.inferred.abi.1596664033" superClass="xilinx.gnu.riscv.linker.inferred.abi" value="-mabi=ilp32" valueType="string"/>
+                                								
+                                <option id="xilinx.gnu.riscv.linker.inferred.garbage.1342802254" superClass="xilinx.gnu.riscv.linker.inferred.garbage" value="true" valueType="boolean"/>
+                                								
+                                <option id="xilinx.gnu.linker.inferred.swplatform.lpath.1999720285" superClass="xilinx.gnu.linker.inferred.swplatform.lpath" valueType="libPaths">
+                                    									
+                                    <listOptionValue builtIn="false" value="${resolvePlatformFile:project=mult,fileType=bspLib}"/>
+                                    								
+                                </option>
+                                								
+                                <option id="xilinx.gnu.linker.inferred.swplatform.flags.1945015548" superClass="xilinx.gnu.linker.inferred.swplatform.flags" valueType="libs">
+                                    									
+                                    <listOptionValue builtIn="false" value="-Wl,--start-group,-lxil,-lgcc,-lc,--end-group"/>
+                                    								
+                                </option>
+                                								
+                                <option id="xilinx.gnu.c.linker.option.lscript.2087789193" superClass="xilinx.gnu.c.linker.option.lscript" value="../src/lscript.ld" valueType="string"/>
+                                								
+                                <inputType id="xilinx.gnu.linker.input.1310278166" superClass="xilinx.gnu.linker.input">
+                                    									
+                                    <additionalInput kind="additionalinputdependency" paths="$(USER_OBJS)"/>
+                                    									
+                                    <additionalInput kind="additionalinput" paths="$(LIBS)"/>
+                                    								
+                                </inputType>
+                                								
+                                <inputType id="xilinx.gnu.linker.input.lscript.1136759596" name="Linker Script" superClass="xilinx.gnu.linker.input.lscript"/>
+                                							
+                            </tool>
+                            							
+                            <tool id="xilinx.gnu.riscv.cxx.toolchain.linker.debug.1475493157" name="RISC-V g++ linker" superClass="xilinx.gnu.riscv.cxx.toolchain.linker.debug">
+                                								
+                                <option id="xilinx.gnu.riscv.linker.inferred.arch.1904398838" superClass="xilinx.gnu.riscv.linker.inferred.arch" value="-march=rv32i" valueType="string"/>
+                                								
+                                <option id="xilinx.gnu.riscv.linker.inferred.abi.1180786700" superClass="xilinx.gnu.riscv.linker.inferred.abi" value="-mabi=ilp32" valueType="string"/>
+                                								
+                                <option id="xilinx.gnu.riscv.linker.inferred.garbage.1762891489" superClass="xilinx.gnu.riscv.linker.inferred.garbage" value="true" valueType="boolean"/>
+                                								
+                                <option id="xilinx.gnu.linker.inferred.swplatform.lpath.1574940351" superClass="xilinx.gnu.linker.inferred.swplatform.lpath" valueType="libPaths">
+                                    									
+                                    <listOptionValue builtIn="false" value="${resolvePlatformFile:project=mult,fileType=bspLib}"/>
+                                    								
+                                </option>
+                                								
+                                <option id="xilinx.gnu.linker.inferred.swplatform.flags.90169647" superClass="xilinx.gnu.linker.inferred.swplatform.flags" valueType="libs">
+                                    									
+                                    <listOptionValue builtIn="false" value="-Wl,--start-group,-lxil,-lgcc,-lc,--end-group"/>
+                                    								
+                                </option>
+                                								
+                                <option id="xilinx.gnu.c.linker.option.lscript.1909391370" superClass="xilinx.gnu.c.linker.option.lscript" value="../src/lscript.ld" valueType="string"/>
+                                							
+                            </tool>
+                            							
+                            <tool id="xilinx.gnu.riscv.size.debug.941148130" name="RISC-V Print Size" superClass="xilinx.gnu.riscv.size.debug"/>
+                            						
+                        </toolChain>
+                        					
+                    </folderInfo>
+                    					
+                    <sourceEntries>
+                        						
+                        <entry excluding="_ide" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
+                        					
+                    </sourceEntries>
+                    				
+                </configuration>
+                			
+            </storageModule>
+            			
+            <storageModule moduleId="org.eclipse.cdt.core.externalSettings"/>
+            		
+        </cconfiguration>
+        		
+        <cconfiguration id="xilinx.gnu.riscv.exe.release.855198454">
+            			
+            <storageModule buildSystemId="org.eclipse.cdt.managedbuilder.core.configurationDataProvider" id="xilinx.gnu.riscv.exe.release.855198454" moduleId="org.eclipse.cdt.core.settings" name="Release">
+                				
+                <externalSettings/>
+                				
+                <extensions>
+                    					
+                    <extension id="com.xilinx.sdk.managedbuilder.XELF.riscv" point="org.eclipse.cdt.core.BinaryParser"/>
+                    					
+                    <extension id="org.eclipse.cdt.core.GASErrorParser" point="org.eclipse.cdt.core.ErrorParser"/>
+                    					
+                    <extension id="org.eclipse.cdt.core.GmakeErrorParser" point="org.eclipse.cdt.core.ErrorParser"/>
+                    					
+                    <extension id="org.eclipse.cdt.core.GLDErrorParser" point="org.eclipse.cdt.core.ErrorParser"/>
+                    					
+                    <extension id="org.eclipse.cdt.core.CWDLocator" point="org.eclipse.cdt.core.ErrorParser"/>
+                    					
+                    <extension id="org.eclipse.cdt.core.GCCErrorParser" point="org.eclipse.cdt.core.ErrorParser"/>
+                    				
+                </extensions>
+                			
+            </storageModule>
+            			
+            <storageModule moduleId="cdtBuildSystem" version="4.0.0">
+                				
+                <configuration artifactExtension="elf" artifactName="${ProjName}" buildArtefactType="org.eclipse.cdt.build.core.buildArtefactType.exe" buildProperties="org.eclipse.cdt.build.core.buildArtefactType=org.eclipse.cdt.build.core.buildArtefactType.exe,org.eclipse.cdt.build.core.buildType=org.eclipse.cdt.build.core.buildType.release" cleanCommand="rm -rf" description="" id="xilinx.gnu.riscv.exe.release.855198454" name="Release" parent="xilinx.gnu.riscv.exe.release">
+                    					
+                    <folderInfo id="xilinx.gnu.riscv.exe.release.855198454." name="/" resourcePath="">
+                        						
+                        <toolChain id="xilinx.gnu.riscv.exe.release.toolchain.635578805" name="Vitis RISC-V GNU Toolchain" superClass="xilinx.gnu.riscv.exe.release.toolchain">
+                            							
+                            <targetPlatform binaryParser="com.xilinx.sdk.managedbuilder.XELF.riscv" id="xilinx.riscv.target.gnu.base.release.1845275161" isAbstract="false" name="Debug Platform" superClass="xilinx.riscv.target.gnu.base.release"/>
+                            							
+                            <builder buildPath="${workspace_loc:/mult}/Release" enableAutoBuild="true" id="xilinx.gnu.riscv.toolchain.builder.release.1048269340" managedBuildOn="true" name="GNU make.Release" superClass="xilinx.gnu.riscv.toolchain.builder.release"/>
+                            							
+                            <tool id="xilinx.gnu.riscv.c.toolchain.assembler.release.367177498" name="RISC-V gcc assembler" superClass="xilinx.gnu.riscv.c.toolchain.assembler.release">
+                                								
+                                <inputType id="xilinx.gnu.assembler.input.1458842650" superClass="xilinx.gnu.assembler.input"/>
+                                							
+                            </tool>
+                            							
+                            <tool id="xilinx.gnu.riscv.c.toolchain.compiler.release.1440267656" name="RISC-V gcc compiler" superClass="xilinx.gnu.riscv.c.toolchain.compiler.release">
+                                								
+                                <option defaultValue="gnu.c.optimization.level.more" id="xilinx.gnu.compiler.option.optimization.level.1328372790" superClass="xilinx.gnu.compiler.option.optimization.level" valueType="enumerated"/>
+                                								
+                                <option id="xilinx.gnu.compiler.option.debugging.level.2071888265" superClass="xilinx.gnu.compiler.option.debugging.level" useByScannerDiscovery="false" value="gnu.c.debugging.level.none" valueType="enumerated"/>
+                                								
+                                <option id="xilinx.gnu.riscv.compiler.inferred.arch.1613204971" superClass="xilinx.gnu.riscv.compiler.inferred.arch" value="-march=rv32i" valueType="string"/>
+                                								
+                                <option id="xilinx.gnu.riscv.compiler.inferred.abi.1044922463" superClass="xilinx.gnu.riscv.compiler.inferred.abi" value="-mabi=ilp32" valueType="string"/>
+                                								
+                                <option id="xilinx.gnu.riscv.compiler.inferred.garbage.382460070" superClass="xilinx.gnu.riscv.compiler.inferred.garbage" value="true" valueType="boolean"/>
+                                								
+                                <option id="xilinx.gnu.compiler.inferred.swplatform.includes.727958296" superClass="xilinx.gnu.compiler.inferred.swplatform.includes" valueType="includePath">
+                                    									
+                                    <listOptionValue builtIn="false" value="${resolvePlatformFile:project=mult,fileType=bspInclude}"/>
+                                    								
+                                </option>
+                                								
+                                <inputType id="xilinx.gnu.riscv.c.compiler.input.194701792" name="C source files" superClass="xilinx.gnu.riscv.c.compiler.input"/>
+                                							
+                            </tool>
+                            							
+                            <tool id="xilinx.gnu.riscv.cxx.toolchain.compiler.release.887930459" name="RISC-V g++ compiler" superClass="xilinx.gnu.riscv.cxx.toolchain.compiler.release">
+                                								
+                                <option defaultValue="gnu.c.optimization.level.more" id="xilinx.gnu.compiler.option.optimization.level.1738917376" superClass="xilinx.gnu.compiler.option.optimization.level" valueType="enumerated"/>
+                                								
+                                <option id="xilinx.gnu.compiler.option.debugging.level.1220917168" superClass="xilinx.gnu.compiler.option.debugging.level" useByScannerDiscovery="false" value="gnu.c.debugging.level.none" valueType="enumerated"/>
+                                								
+                                <option id="xilinx.gnu.riscv.compiler.inferred.arch.402660677" superClass="xilinx.gnu.riscv.compiler.inferred.arch" value="-march=rv32i" valueType="string"/>
+                                								
+                                <option id="xilinx.gnu.riscv.compiler.inferred.abi.2013394221" superClass="xilinx.gnu.riscv.compiler.inferred.abi" value="-mabi=ilp32" valueType="string"/>
+                                								
+                                <option id="xilinx.gnu.riscv.compiler.inferred.garbage.498540383" superClass="xilinx.gnu.riscv.compiler.inferred.garbage" value="true" valueType="boolean"/>
+                                								
+                                <option id="xilinx.gnu.compiler.inferred.swplatform.includes.671884777" superClass="xilinx.gnu.compiler.inferred.swplatform.includes" valueType="includePath">
+                                    									
+                                    <listOptionValue builtIn="false" value="${resolvePlatformFile:project=mult,fileType=bspInclude}"/>
+                                    								
+                                </option>
+                                							
+                            </tool>
+                            							
+                            <tool id="xilinx.gnu.riscv.toolchain.archiver.1190676182" name="RISC-V archiver" superClass="xilinx.gnu.riscv.toolchain.archiver"/>
+                            							
+                            <tool id="xilinx.gnu.riscv.c.toolchain.linker.release.382444735" name="RISC-V gcc linker" superClass="xilinx.gnu.riscv.c.toolchain.linker.release">
+                                								
+                                <option id="xilinx.gnu.riscv.linker.inferred.arch.152491677" superClass="xilinx.gnu.riscv.linker.inferred.arch" value="-march=rv32i" valueType="string"/>
+                                								
+                                <option id="xilinx.gnu.riscv.linker.inferred.abi.600039794" superClass="xilinx.gnu.riscv.linker.inferred.abi" value="-mabi=ilp32" valueType="string"/>
+                                								
+                                <option id="xilinx.gnu.riscv.linker.inferred.garbage.1426499282" superClass="xilinx.gnu.riscv.linker.inferred.garbage" value="true" valueType="boolean"/>
+                                								
+                                <option id="xilinx.gnu.linker.inferred.swplatform.lpath.1825945826" superClass="xilinx.gnu.linker.inferred.swplatform.lpath" valueType="libPaths">
+                                    									
+                                    <listOptionValue builtIn="false" value="${resolvePlatformFile:project=mult,fileType=bspLib}"/>
+                                    								
+                                </option>
+                                								
+                                <option id="xilinx.gnu.linker.inferred.swplatform.flags.501448040" superClass="xilinx.gnu.linker.inferred.swplatform.flags" valueType="libs">
+                                    									
+                                    <listOptionValue builtIn="false" value="-Wl,--start-group,-lxil,-lgcc,-lc,--end-group"/>
+                                    								
+                                </option>
+                                								
+                                <option id="xilinx.gnu.c.linker.option.lscript.1284244091" superClass="xilinx.gnu.c.linker.option.lscript" value="../src/lscript.ld" valueType="string"/>
+                                								
+                                <inputType id="xilinx.gnu.linker.input.18440396" superClass="xilinx.gnu.linker.input">
+                                    									
+                                    <additionalInput kind="additionalinputdependency" paths="$(USER_OBJS)"/>
+                                    									
+                                    <additionalInput kind="additionalinput" paths="$(LIBS)"/>
+                                    								
+                                </inputType>
+                                								
+                                <inputType id="xilinx.gnu.linker.input.lscript.1688866813" name="Linker Script" superClass="xilinx.gnu.linker.input.lscript"/>
+                                							
+                            </tool>
+                            							
+                            <tool id="xilinx.gnu.riscv.cxx.toolchain.linker.release.1008164345" name="RISC-V g++ linker" superClass="xilinx.gnu.riscv.cxx.toolchain.linker.release">
+                                								
+                                <option id="xilinx.gnu.riscv.linker.inferred.arch.435093599" superClass="xilinx.gnu.riscv.linker.inferred.arch" value="-march=rv32i" valueType="string"/>
+                                								
+                                <option id="xilinx.gnu.riscv.linker.inferred.abi.2120062473" superClass="xilinx.gnu.riscv.linker.inferred.abi" value="-mabi=ilp32" valueType="string"/>
+                                								
+                                <option id="xilinx.gnu.riscv.linker.inferred.garbage.329569242" superClass="xilinx.gnu.riscv.linker.inferred.garbage" value="true" valueType="boolean"/>
+                                								
+                                <option id="xilinx.gnu.linker.inferred.swplatform.lpath.1565932534" superClass="xilinx.gnu.linker.inferred.swplatform.lpath" valueType="libPaths">
+                                    									
+                                    <listOptionValue builtIn="false" value="${resolvePlatformFile:project=mult,fileType=bspLib}"/>
+                                    								
+                                </option>
+                                								
+                                <option id="xilinx.gnu.linker.inferred.swplatform.flags.1772433968" superClass="xilinx.gnu.linker.inferred.swplatform.flags" valueType="libs">
+                                    									
+                                    <listOptionValue builtIn="false" value="-Wl,--start-group,-lxil,-lgcc,-lc,--end-group"/>
+                                    								
+                                </option>
+                                								
+                                <option id="xilinx.gnu.c.linker.option.lscript.251709202" superClass="xilinx.gnu.c.linker.option.lscript" value="../src/lscript.ld" valueType="string"/>
+                                							
+                            </tool>
+                            							
+                            <tool id="xilinx.gnu.riscv.size.release.1030141800" name="RISC-V Print Size" superClass="xilinx.gnu.riscv.size.release"/>
+                            						
+                        </toolChain>
+                        					
+                    </folderInfo>
+                    					
+                    <sourceEntries>
+                        						
+                        <entry excluding="_ide" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
+                        					
+                    </sourceEntries>
+                    				
+                </configuration>
+                			
+            </storageModule>
+            			
+            <storageModule moduleId="org.eclipse.cdt.core.externalSettings"/>
+            		
+        </cconfiguration>
+        	
+    </storageModule>
+    	
+    <storageModule moduleId="org.eclipse.cdt.core.LanguageSettingsProviders"/>
+    	
+    <storageModule moduleId="cdtBuildSystem" version="4.0.0">
+        		
+        <project id="mult.xilinx.gnu.riscv.exe.1872880780" name="Vitis RISC-V Executable" projectType="xilinx.gnu.riscv.exe"/>
+        	
+    </storageModule>
+    	
+    <storageModule moduleId="scannerConfiguration">
+        		
+        <autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
+        		
+        <scannerConfigBuildInfo instanceId="xilinx.gnu.riscv.exe.release.855198454;xilinx.gnu.riscv.exe.release.855198454.;xilinx.gnu.riscv.c.toolchain.compiler.release.1440267656;xilinx.gnu.riscv.c.compiler.input.194701792">
+            			
+            <autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId="com.xilinx.managedbuilder.ui.RiscVGCCManagedMakePerProjectProfileC"/>
+            		
+        </scannerConfigBuildInfo>
+        		
+        <scannerConfigBuildInfo instanceId="xilinx.gnu.riscv.exe.release.855198454;xilinx.gnu.riscv.exe.release.855198454.">
+            			
+            <autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId="com.xilinx.managedbuilder.ui.RiscVGCCManagedMakePerProjectProfileC"/>
+            		
+        </scannerConfigBuildInfo>
+        		
+        <scannerConfigBuildInfo instanceId="xilinx.gnu.riscv.exe.debug.162840026;xilinx.gnu.riscv.exe.debug.162840026.;xilinx.gnu.riscv.c.toolchain.compiler.debug.689432837;xilinx.gnu.riscv.c.compiler.input.2138981309">
+            			
+            <autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId="com.xilinx.managedbuilder.ui.RiscVGCCManagedMakePerProjectProfileC"/>
+            		
+        </scannerConfigBuildInfo>
+        		
+        <scannerConfigBuildInfo instanceId="xilinx.gnu.riscv.exe.debug.162840026;xilinx.gnu.riscv.exe.debug.162840026.">
+            			
+            <autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId="com.xilinx.managedbuilder.ui.RiscVGCCManagedMakePerProjectProfileC"/>
+            		
+        </scannerConfigBuildInfo>
+        	
+    </storageModule>
+    	
+    <storageModule moduleId="refreshScope"/>
+    
+</cproject>
