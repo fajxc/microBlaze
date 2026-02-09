@@ -9,18 +9,18 @@ RELEASEDIR=../../../lib
 INCLUDEDIR=../../../include
 INCLUDES=-I./. -I${INCLUDEDIR}
 
-INCLUDEFILES := $(wildcard *.h)
-LIBSOURCES   := $(wildcard *.c)
-OUTS         := $(LIBSOURCES:.c=.o)
+INCLUDEFILES=$(wildcard *.h)
+LIBSOURCES= $(wildcard *.c)
+OUTS = $(wildcard *.o)
 
 libs:
-	@echo Compiling simpleSum...
-	$(COMPILER) $(COMPILER_FLAGS) $(EXTRA_COMPILER_FLAGS) $(INCLUDES) -c $(LIBSOURCES)
-	$(ARCHIVER) -r $(RELEASEDIR)/$(LIB) $(OUTS)
+	echo "Compiling simpleSum..."
+	$(COMPILER) $(COMPILER_FLAGS) $(EXTRA_COMPILER_FLAGS) $(INCLUDES) $(LIBSOURCES)
+	$(ARCHIVER) -r ${RELEASEDIR}/${LIB} ${OUTS}
 	make clean
 
 include:
-	$(CP) $(INCLUDEFILES) $(INCLUDEDIR)
+	${CP} $(INCLUDEFILES) $(INCLUDEDIR)
 
 clean:
-	rm -rf $(OUTS)
+	rm -rf ${OUTS}

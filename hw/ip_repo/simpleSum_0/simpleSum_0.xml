@@ -598,11 +598,11 @@
         <spirit:parameters>
           <spirit:parameter>
             <spirit:name>GENtimestamp</spirit:name>
-            <spirit:value>Fri Jan 30 19:55:17 UTC 2026</spirit:value>
+            <spirit:value>Mon Feb 09 06:15:44 UTC 2026</spirit:value>
           </spirit:parameter>
           <spirit:parameter>
             <spirit:name>outputProductCRC</spirit:name>
-            <spirit:value>9:1ea1d016</spirit:value>
+            <spirit:value>9:a4db4011</spirit:value>
           </spirit:parameter>
         </spirit:parameters>
       </spirit:view>
@@ -996,7 +996,7 @@
   <spirit:vendorExtensions>
     <xilinx:coreExtensions>
       <xilinx:displayName>simpleSum_v1.0</xilinx:displayName>
-      <xilinx:coreRevision>4</xilinx:coreRevision>
+      <xilinx:coreRevision>7</xilinx:coreRevision>
       <xilinx:configElementInfos>
         <xilinx:configElementInfo xilinx:referenceId="BUSIFPARAM_VALUE.S00_AXI.ADDR_WIDTH" xilinx:valueSource="auto"/>
         <xilinx:configElementInfo xilinx:referenceId="BUSIFPARAM_VALUE.S00_AXI.ARUSER_WIDTH" xilinx:valueSource="constant"/>
@@ -1022,7 +1022,7 @@
       <xilinx:xilinxVersion>2024.2</xilinx:xilinxVersion>
       <xilinx:checksum xilinx:scope="busInterfaces" xilinx:value="52efbd82"/>
       <xilinx:checksum xilinx:scope="memoryMaps" xilinx:value="ed1368d5"/>
-      <xilinx:checksum xilinx:scope="fileGroups" xilinx:value="da966183"/>
+      <xilinx:checksum xilinx:scope="fileGroups" xilinx:value="80d6129d"/>
       <xilinx:checksum xilinx:scope="ports" xilinx:value="1373c270"/>
       <xilinx:checksum xilinx:scope="hdlParameters" xilinx:value="2e811c89"/>
       <xilinx:checksum xilinx:scope="parameters" xilinx:value="0f7a71af"/>

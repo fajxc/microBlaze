@@ -26,3 +26,11 @@ platform config -updatehw {C:/ENEL400/microBlaze/hw/microV/top.xsa}
 platform clean
 platform generate
 platform generate -domains 
+platform active {platform}
+platform config -updatehw {C:/ENEL400/microBlaze/hw/microV/nntest.xsa}
+platform clean
+platform generate
+platform generate -domains 
+platform active {platform}
+platform config -updatehw {C:/ENEL400/microBlaze/hw/microV/nnv1.xsa}
+platform generate

@@ -103,22 +103,22 @@
 	//-- Signals for user logic register space example
 	//------------------------------------------------
 	//-- Number of Slave Registers 6
-	reg [C_S_AXI_DATA_WIDTH-1:0]	slv_reg0; // ctrl
-	reg [C_S_AXI_DATA_WIDTH-1:0]	slv_reg1; // status
-	reg [C_S_AXI_DATA_WIDTH-1:0]	slv_reg2; // b
-	reg [C_S_AXI_DATA_WIDTH-1:0]	slv_reg3; // c
-	reg [C_S_AXI_DATA_WIDTH-1:0]	slv_reg4; // out
+	reg [C_S_AXI_DATA_WIDTH-1:0]	slv_reg0; // control: [0]=start
+	reg [C_S_AXI_DATA_WIDTH-1:0]	slv_reg1; // pixel data: [7:0]
+	reg [C_S_AXI_DATA_WIDTH-1:0]	slv_reg2; // pixel index: [9:0]
+	reg [C_S_AXI_DATA_WIDTH-1:0]	slv_reg3; // status/result: [0]=done, [7:4]=pred
+	reg [C_S_AXI_DATA_WIDTH-1:0]	slv_reg4; // unused
 	reg [C_S_AXI_DATA_WIDTH-1:0]	slv_reg5; // unused
 	integer	 byte_index;
     // ------------------------------------------------------------
     // Toy accelerator internal control
-    // slv_reg0[0] = START
-    // slv_reg1[0] = DONE
-    // slv_reg2    = B
-    // slv_reg3    = C
-    // slv_reg4    = OUT
+    // slv_reg0[0] = start
+    // slv_reg1 = pixel value = bits[7:0] (0..255)
+    // slv_reg2    = pixel index bits[9:0] = which pixel (0..783)
+    // slv_reg3    = status/result [0]=done, [7:4]=prediction digit
+    // slv_reg4    = 
     // ------------------------------------------------------------
-    reg accel_busy;
+    //reg accel_busy;
 	// I/O Connections assignments
 
 	assign S_AXI_AWREADY	= axi_awready;
@@ -215,11 +215,11 @@
 	  if ( S_AXI_ARESETN == 1'b0 )
 	    begin
 	      slv_reg0 <= 0;
-	      //slv_reg1 <= 0;
+	      slv_reg1 <= 0;
 	      slv_reg2 <= 0;
-	      slv_reg3 <= 0;
+	      //slv_reg3 <= 0;
 	      //slv_reg4 <= 0;
-	      slv_reg5 <= 0;
+	      //slv_reg5 <= 0;
 	    end 
 	  else begin
 	    if (S_AXI_WVALID)
@@ -237,7 +237,7 @@
 	              if ( S_AXI_WSTRB[byte_index] == 1 ) begin
 	                // Respective byte enables are asserted as per write strobes 
 	                // Slave register 1
-	                //slv_reg1[(byte_index*8) +: 8] <= S_AXI_WDATA[(byte_index*8) +: 8];
+	                slv_reg1[(byte_index*8) +: 8] <= S_AXI_WDATA[(byte_index*8) +: 8];
 	              end  
 	          3'h2:
 	            for ( byte_index = 0; byte_index <= (C_S_AXI_DATA_WIDTH/8)-1; byte_index = byte_index+1 )
@@ -246,12 +246,12 @@
 	                // Slave register 2
 	                slv_reg2[(byte_index*8) +: 8] <= S_AXI_WDATA[(byte_index*8) +: 8];
 	              end  
-	          3'h3:
-	            for ( byte_index = 0; byte_index <= (C_S_AXI_DATA_WIDTH/8)-1; byte_index = byte_index+1 )
-	              if ( S_AXI_WSTRB[byte_index] == 1 ) begin
+	          3'h3: begin
+	            //for ( byte_index = 0; byte_index <= (C_S_AXI_DATA_WIDTH/8)-1; byte_index = byte_index+1 )
+	              //if ( S_AXI_WSTRB[byte_index] == 1 ) begin
 	                // Respective byte enables are asserted as per write strobes 
 	                // Slave register 3
-	                slv_reg3[(byte_index*8) +: 8] <= S_AXI_WDATA[(byte_index*8) +: 8];
+	                //slv_reg3[(byte_index*8) +: 8] <= S_AXI_WDATA[(byte_index*8) +: 8];
 	              end  
 	          3'h4:
 	            for ( byte_index = 0; byte_index <= (C_S_AXI_DATA_WIDTH/8)-1; byte_index = byte_index+1 )
@@ -265,7 +265,7 @@
 	              if ( S_AXI_WSTRB[byte_index] == 1 ) begin
 	                // Respective byte enables are asserted as per write strobes 
 	                // Slave register 5
-	                slv_reg5[(byte_index*8) +: 8] <= S_AXI_WDATA[(byte_index*8) +: 8];
+	                //slv_reg5[(byte_index*8) +: 8] <= S_AXI_WDATA[(byte_index*8) +: 8];
 	              end  
 	          default : begin
 	                      slv_reg0 <= slv_reg0;
@@ -330,31 +330,68 @@
 	// Implement memory mapped register select and read logic generation
 	  assign S_AXI_RDATA = (axi_araddr[ADDR_LSB+OPT_MEM_ADDR_BITS:ADDR_LSB] == 3'h0) ? slv_reg0 : (axi_araddr[ADDR_LSB+OPT_MEM_ADDR_BITS:ADDR_LSB] == 3'h1) ? slv_reg1 : (axi_araddr[ADDR_LSB+OPT_MEM_ADDR_BITS:ADDR_LSB] == 3'h2) ? slv_reg2 : (axi_araddr[ADDR_LSB+OPT_MEM_ADDR_BITS:ADDR_LSB] == 3'h3) ? slv_reg3 : (axi_araddr[ADDR_LSB+OPT_MEM_ADDR_BITS:ADDR_LSB] == 3'h4) ? slv_reg4 : (axi_araddr[ADDR_LSB+OPT_MEM_ADDR_BITS:ADDR_LSB] == 3'h5) ? slv_reg5 : 0; 
 	// Add user logic here
-    // Toy HW accel: on START, compute OUT = B * C and raise DONE.
-    // Two-cycle behavior:
-    //  - cycle 1: see START -> clear DONE, set busy
-    //  - cycle 2: write OUT, set DONE, clear START, clear busy
+    // -------------------------
+    // Register write detect
+    // -------------------------
+    wire [2:0] wr_sel = (S_AXI_AWVALID) ?
+        S_AXI_AWADDR[ADDR_LSB+OPT_MEM_ADDR_BITS:ADDR_LSB] :
+        axi_awaddr[ADDR_LSB+OPT_MEM_ADDR_BITS:ADDR_LSB];
+
+    // one-cycle pulse when writing reg1 (pixel data)
+    reg wr_reg1_pulse;
+
     always @(posedge S_AXI_ACLK) begin
         if (S_AXI_ARESETN == 1'b0) begin
-            accel_busy   <= 1'b0;
-            slv_reg1[0]  <= 1'b0;   // DONE
-            slv_reg4     <= 32'd0;  // OUT
-            //slv_reg0[0]  <= 1'b0;   // START
-        end else begin
-            // If software sets START (slv_reg0[0]=1), begin operation
-            if (!accel_busy && slv_reg0[0]) begin
-                accel_busy  <= 1'b1;
-                slv_reg1[0] <= 1'b0;   // clear DONE while working
-            end
-            // Next cycle: produce result and finish
-            else if (accel_busy) begin
-                slv_reg4     <= slv_reg2 * slv_reg3;  // OUT = B * C
-                slv_reg1[0]  <= 1'b1;                 // DONE = 1
-                //slv_reg0[0]  <= 1'b0;                 // clear START (one-shot)
-                accel_busy   <= 1'b0;
-            end
-        end
-    end
+            wr_reg1_pulse <= 1'b0;
+  end else begin
+    // pulse whenever a write data beat happens targeting reg1
+    wr_reg1_pulse <= (S_AXI_WVALID && S_AXI_WREADY && (wr_sel == 3'h1));
+  end
+end
+
+    wire pix_we = wr_reg1_pulse;
+
+    // -------------------------
+// Aliases
+// -------------------------
+wire        start_bit   = slv_reg0[0];
+wire [7:0]  pix_data_w  = slv_reg1[7:0];
+wire [9:0]  pix_addr_w  = slv_reg2[9:0];
+
+wire        nn_done;
+wire [3:0]  nn_pred;
+
+// -------------------------
+// NN core instance
+// -------------------------
+nn_core #(
+  .N_IN(784),
+  .N_OUT(10)
+) u_nn (
+  .clk(S_AXI_ACLK),
+  .rst(!S_AXI_ARESETN),
+
+  .start(start_bit),
+  .done(nn_done),
+
+  .pix_we(pix_we),
+  .pix_addr(pix_addr_w),
+  .pix_data(pix_data_w),
+
+  .predicted(nn_pred)
+);
+
+// -------------------------
+// HW drives slv_reg3
+// -------------------------
+always @(posedge S_AXI_ACLK) begin
+  if (S_AXI_ARESETN == 1'b0) begin
+    slv_reg3 <= 32'd0;
+  end else begin
+    slv_reg3 <= {24'd0, nn_pred, 3'd0, nn_done};
+  end
+end
+
 	// User logic ends
 
 	endmodule

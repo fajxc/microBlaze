@@ -1,38 +1,61 @@
 #include "xparameters.h"
 #include "xil_io.h"
 #include "xil_printf.h"
+#include "sleep.h"
 
-#define BASE XPAR_SIMPLESUM_0_S00_AXI_BASEADDR
+// CHANGE THIS to whatever shows up in xparameters.h
+// Search for "_S00_AXI_BASEADDR" and pick your IP.
+#define BASE 0x44A00000
 
-int main() {
-    u32 b = 6;
-    u32 c = 7;
+#define REG0 (BASE + 0x00)
+#define REG1 (BASE + 0x04)
+#define REG2 (BASE + 0x08)
+#define REG3 (BASE + 0x0C)
 
-    xil_printf("Start\r\n");
-    for (u32 i = 0; i < 10; i++) {
-        u32 bb = i + 3;
-        u32 cc = i + 5;
-        Xil_Out32(BASE + 0x08, bb);
-        Xil_Out32(BASE + 0x0C, cc);
-        Xil_Out32(BASE + 0x00, 1);
-        while ((Xil_In32(BASE + 0x04) & 1) == 0) {}
-        u32 oo = Xil_In32(BASE + 0x10);
-        xil_printf("%d*%d=%d\r\n", bb, cc, oo);
-    }
-    // Write operands
-    Xil_Out32(BASE + 0x08, b);
-    Xil_Out32(BASE + 0x0C, c);
+static void write_pixel(u32 idx, u8 pix)
+{
+    Xil_Out32(REG2, idx);   // set pixel index
+    Xil_Out32(REG1, pix);   // write pixel value (this triggers pix_we pulse)
+}
+
+int main()
+{
+    xil_printf("\r\n=== NN Stub Test ===\r\n");
+
+    // Make sure start is low (re-armed)
+    Xil_Out32(REG0, 0);
+
+    // ---- Test 1: pixel0 = 7 -> predicted should be 7 ----
+    write_pixel(0, 7);
 
     // Start
-    Xil_Out32(BASE + 0x00, 1);
+    Xil_Out32(REG0, 1);
 
-    // Wait DONE
-    while ((Xil_In32(BASE + 0x04) & 1) == 0) {}
+    // Poll done
+    while ((Xil_In32(REG3) & 0x1) == 0) {}
 
-    // Read result
-    u32 out = Xil_In32(BASE + 0x10);
+    u32 r = Xil_In32(REG3);
+    u32 pred = (r >> 4) & 0xF;
+    xil_printf("Test1: REG3=0x%08lx pred=%u (expect 7)\r\n", (unsigned)r, (unsigned)pred);
 
-    xil_printf("B=%d C=%d OUT=%d\r\n", b, c, out);
+    // Re-arm (core holds done until start goes low)
+    Xil_Out32(REG0, 0);
+
+    usleep(1000);
+
+    // ---- Test 2: pixel0 = 12 -> predicted should be 12 ----
+    write_pixel(0, 12);
+
+    Xil_Out32(REG0, 1);
+    while ((Xil_In32(REG3) & 0x1) == 0) {}
+
+    r = Xil_In32(REG3);
+    pred = (r >> 4) & 0xF;
+    xil_printf("Test2: REG3=0x%08lx pred=%u (expect 12)\r\n", (unsigned)r, (unsigned)pred);
+
+    Xil_Out32(REG0, 0);
+
+    xil_printf("Done.\r\n");
 
     while (1) {}
 }
