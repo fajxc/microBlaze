@@ -33,57 +33,32 @@ module nn_core #(
                 x_mem[pix_addr] <= pix_data;
         end
     end
+    
+// ------------------------------------------------------------
+// Weight and bias memories (loaded at bitstream time)
+// ------------------------------------------------------------
+reg signed [7:0]  w1_flat [0:32*784-1];
+reg signed [7:0]  w2_flat [0:10*32-1];
+reg signed [31:0] b1 [0:31];
+reg signed [31:0] b2 [0:9];
 
-    // ------------------------------------------------------------
-    // Simple "compute" FSM
-    // - When start goes high: wait a little, then output predicted
-    // - predicted is just the low 4 bits of pixel 0
-    // - done stays high until start goes low (re-arm)
-    // ------------------------------------------------------------
-    localparam S_IDLE = 2'd0;
-    localparam S_WAIT = 2'd1;
-    localparam S_DONE = 2'd2;
-
-    reg [1:0] state;
-    reg [7:0] wait_ctr;
-
-    always @(posedge clk) begin
-        if (rst) begin
-            state     <= S_IDLE;
-            done      <= 1'b0;
-            predicted <= 4'd0;
-            wait_ctr  <= 8'd0;
-        end else begin
-            case (state)
-                S_IDLE: begin
-                    done     <= 1'b0;
-                    wait_ctr <= 8'd0;
-                    if (start) begin
-                        state <= S_WAIT;
-                    end
-                end
-
-                S_WAIT: begin
-                    // just burn some cycles so you can see it isn't instant
-                    wait_ctr <= wait_ctr + 1;
-                    if (wait_ctr == 8'd50) begin
-                        predicted <= x_mem[0][3:0]; // show pixel0 low nibble
-                        done      <= 1'b1;
-                        state     <= S_DONE;
-                    end
-                end
-
-                S_DONE: begin
-                    // hold done until start drops (so SW can re-run)
-                    if (!start) begin
-                        done  <= 1'b0;
-                        state <= S_IDLE;
-                    end
-                end
-
-                default: state <= S_IDLE;
-            endcase
-        end
+initial begin
+    $readmemh("src/w1.mem", w1_flat);
+    $readmemh("src/w2.mem", w2_flat);
+    $readmemh("src/b1.mem", b1);
+    $readmemh("src/b2.mem", b2);
+end
+always @(posedge clk) begin
+    if (rst) begin
+        predicted <= 0;
+        done <= 0;
+    end else if (start) begin
+        predicted <= 4'hF; // read real bias from mem
+        done <= 1;
+    end else begin
+        done <= 0;
     end
+end
+
 
 endmodule

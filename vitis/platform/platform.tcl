@@ -34,3 +34,29 @@ platform generate -domains
 platform active {platform}
 platform config -updatehw {C:/ENEL400/microBlaze/hw/microV/nnv1.xsa}
 platform generate
+platform config -updatehw {C:/ENEL400/microBlaze/hw/microV/weight_test.xsa}
+platform clean
+platform generate
+platform generate -domains 
+platform config -updatehw {C:/ENEL400/microBlaze/hw/microV/weight_test.xsa}
+platform generate -domains 
+platform clean
+platform generate
+platform config -updatehw {C:/ENEL400/microBlaze/hw/microV/feb9.xsa}
+platform clean
+platform generate
+platform clean
+platform generate
+platform clean
+platform generate
+platform clean
+platform generate
+platform generate -domains 
+platform clean
+platform generate
+platform active {platform}
+platform config -updatehw {C:/ENEL400/microBlaze/hw/microV/feb13.xsa}
+platform clean
+platform generate
+platform clean
+platform generate

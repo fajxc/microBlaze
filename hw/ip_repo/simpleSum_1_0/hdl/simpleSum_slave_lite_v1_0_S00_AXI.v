@@ -388,7 +388,10 @@ always @(posedge S_AXI_ACLK) begin
   if (S_AXI_ARESETN == 1'b0) begin
     slv_reg3 <= 32'd0;
   end else begin
+  // keep old by default
+    if (nn_done) begin
     slv_reg3 <= {24'd0, nn_pred, 3'd0, nn_done};
+    end
   end
 end
 
