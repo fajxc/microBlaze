@@ -46,7 +46,7 @@
 -- 
 -- DO NOT MODIFY THIS FILE.
 -- IP VLNV: xilinx.com:user:simpleSum:1.0
--- IP Revision: 19
+-- IP Revision: 22
 
 -- The following code must appear in the VHDL architecture header.
 
@@ -56,6 +56,15 @@ COMPONENT simpleSum_0
     b1_en : OUT STD_LOGIC;
     b1_addr : OUT STD_LOGIC_VECTOR(4 DOWNTO 0);
     b1_dout : IN STD_LOGIC_VECTOR(31 DOWNTO 0);
+    w1_en : OUT STD_LOGIC;
+    w1_addr : OUT STD_LOGIC_VECTOR(14 DOWNTO 0);
+    w1_dout : IN STD_LOGIC_VECTOR(7 DOWNTO 0);
+    w2_en : OUT STD_LOGIC;
+    w2_addr : OUT STD_LOGIC_VECTOR(8 DOWNTO 0);
+    w2_dout : IN STD_LOGIC_VECTOR(7 DOWNTO 0);
+    b2_en : OUT STD_LOGIC;
+    b2_addr : OUT STD_LOGIC_VECTOR(3 DOWNTO 0);
+    b2_dout : IN STD_LOGIC_VECTOR(31 DOWNTO 0);
     s00_axi_aclk : IN STD_LOGIC;
     s00_axi_aresetn : IN STD_LOGIC;
     s00_axi_awaddr : IN STD_LOGIC_VECTOR(4 DOWNTO 0);
@@ -90,6 +99,15 @@ your_instance_name : simpleSum_0
     b1_en => b1_en,
     b1_addr => b1_addr,
     b1_dout => b1_dout,
+    w1_en => w1_en,
+    w1_addr => w1_addr,
+    w1_dout => w1_dout,
+    w2_en => w2_en,
+    w2_addr => w2_addr,
+    w2_dout => w2_dout,
+    b2_en => b2_en,
+    b2_addr => b2_addr,
+    b2_dout => b2_dout,
     s00_axi_aclk => s00_axi_aclk,
     s00_axi_aresetn => s00_axi_aresetn,
     s00_axi_awaddr => s00_axi_awaddr,

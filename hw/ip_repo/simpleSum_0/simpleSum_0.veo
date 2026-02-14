@@ -47,7 +47,7 @@
 // DO NOT MODIFY THIS FILE.
 
 // IP VLNV: xilinx.com:user:simpleSum:1.0
-// IP Revision: 19
+// IP Revision: 22
 
 // The following must be inserted into your Verilog file for this
 // core to be instantiated. Change the instance name and port connections
@@ -58,6 +58,15 @@ simpleSum_0 your_instance_name (
   .b1_en(b1_en),                      // output wire b1_en
   .b1_addr(b1_addr),                  // output wire [4 : 0] b1_addr
   .b1_dout(b1_dout),                  // input wire [31 : 0] b1_dout
+  .w1_en(w1_en),                      // output wire w1_en
+  .w1_addr(w1_addr),                  // output wire [14 : 0] w1_addr
+  .w1_dout(w1_dout),                  // input wire [7 : 0] w1_dout
+  .w2_en(w2_en),                      // output wire w2_en
+  .w2_addr(w2_addr),                  // output wire [8 : 0] w2_addr
+  .w2_dout(w2_dout),                  // input wire [7 : 0] w2_dout
+  .b2_en(b2_en),                      // output wire b2_en
+  .b2_addr(b2_addr),                  // output wire [3 : 0] b2_addr
+  .b2_dout(b2_dout),                  // input wire [31 : 0] b2_dout
   .s00_axi_aclk(s00_axi_aclk),        // input wire s00_axi_aclk
   .s00_axi_aresetn(s00_axi_aresetn),  // input wire s00_axi_aresetn
   .s00_axi_awaddr(s00_axi_awaddr),    // input wire [4 : 0] s00_axi_awaddr

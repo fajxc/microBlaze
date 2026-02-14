@@ -3,7 +3,7 @@
   "ip_inst": {
     "xci_name": "simpleSum_0",
     "component_reference": "xilinx.com:user:simpleSum:1.0",
-    "ip_revision": "19",
+    "ip_revision": "22",
     "gen_directory": ".",
     "parameters": {
       "component_parameters": {
@@ -32,7 +32,7 @@
       },
       "runtime_parameters": {
         "IPCONTEXT": [ { "value": "IP_Flow" } ],
-        "IPREVISION": [ { "value": "19" } ],
+        "IPREVISION": [ { "value": "22" } ],
         "MANAGED": [ { "value": "TRUE" } ],
         "OUTPUTDIR": [ { "value": "." } ],
         "SELECTEDSIMMODEL": [ { "value": "" } ],
@@ -46,6 +46,15 @@
         "b1_en": [ { "direction": "out" } ],
         "b1_addr": [ { "direction": "out", "size_left": "4", "size_right": "0" } ],
         "b1_dout": [ { "direction": "in", "size_left": "31", "size_right": "0" } ],
+        "w1_en": [ { "direction": "out" } ],
+        "w1_addr": [ { "direction": "out", "size_left": "14", "size_right": "0" } ],
+        "w1_dout": [ { "direction": "in", "size_left": "7", "size_right": "0" } ],
+        "w2_en": [ { "direction": "out" } ],
+        "w2_addr": [ { "direction": "out", "size_left": "8", "size_right": "0" } ],
+        "w2_dout": [ { "direction": "in", "size_left": "7", "size_right": "0" } ],
+        "b2_en": [ { "direction": "out" } ],
+        "b2_addr": [ { "direction": "out", "size_left": "3", "size_right": "0" } ],
+        "b2_dout": [ { "direction": "in", "size_left": "31", "size_right": "0" } ],
         "s00_axi_aclk": [ { "direction": "in" } ],
         "s00_axi_aresetn": [ { "direction": "in" } ],
         "s00_axi_awaddr": [ { "direction": "in", "size_left": "4", "size_right": "0" } ],

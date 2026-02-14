@@ -20,6 +20,18 @@ output wire        b1_en,
 output wire [4:0]  b1_addr,
 input  wire [31:0] b1_dout,
 
+output wire        w1_en,
+output wire [14:0] w1_addr,
+input  wire [7:0]  w1_dout,
+
+output wire        w2_en,
+output wire [8:0]  w2_addr,
+input  wire [7:0]  w2_dout,
+
+output wire        b2_en,
+output wire [3:0]  b2_addr,
+input  wire [31:0] b2_dout,
+
 		// User ports ends
 		// Do not modify the ports beyond this line
 
@@ -75,7 +87,16 @@ input  wire [31:0] b1_dout,
 		.S_AXI_RREADY(s00_axi_rready),
 		.b1_en(b1_en),
 		.b1_addr(b1_addr),
-		.b1_dout(b1_dout)
+		.b1_dout(b1_dout),
+		.w1_en(w1_en),
+		.w1_addr(w1_addr),
+		.w1_dout(w1_dout),
+		.w2_en(w2_en),
+		.w2_addr(w2_addr),
+		.w2_dout(w2_dout),
+		.b2_en(b2_en),
+		.b2_addr(b2_addr),
+		.b2_dout(b2_dout)
 	);
 
 	// Add user logic here
