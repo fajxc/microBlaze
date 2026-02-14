@@ -15,6 +15,10 @@
 	)
 	(
 		// Users to add ports here
+// b1 ROM interface (to connect in BD)
+output wire        b1_en,
+output wire [4:0]  b1_addr,
+input  wire [31:0] b1_dout,
 
 		// User ports ends
 		// Do not modify the ports beyond this line
@@ -68,7 +72,10 @@
 		.S_AXI_RDATA(s00_axi_rdata),
 		.S_AXI_RRESP(s00_axi_rresp),
 		.S_AXI_RVALID(s00_axi_rvalid),
-		.S_AXI_RREADY(s00_axi_rready)
+		.S_AXI_RREADY(s00_axi_rready),
+		.b1_en(b1_en),
+		.b1_addr(b1_addr),
+		.b1_dout(b1_dout)
 	);
 
 	// Add user logic here

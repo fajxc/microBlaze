@@ -46,13 +46,18 @@
 -- 
 -- DO NOT MODIFY THIS FILE.
 -- IP VLNV: xilinx.com:user:simpleSum:1.0
--- IP Revision: 10
+-- IP Revision: 19
 
 -- The following code must appear in the VHDL architecture header.
 
 ------------- Begin Cut here for COMPONENT Declaration ------ COMP_TAG
 COMPONENT simpleSum_0
   PORT (
+    b1_en : OUT STD_LOGIC;
+    b1_addr : OUT STD_LOGIC_VECTOR(4 DOWNTO 0);
+    b1_dout : IN STD_LOGIC_VECTOR(31 DOWNTO 0);
+    s00_axi_aclk : IN STD_LOGIC;
+    s00_axi_aresetn : IN STD_LOGIC;
     s00_axi_awaddr : IN STD_LOGIC_VECTOR(4 DOWNTO 0);
     s00_axi_awprot : IN STD_LOGIC_VECTOR(2 DOWNTO 0);
     s00_axi_awvalid : IN STD_LOGIC;
@@ -71,9 +76,7 @@ COMPONENT simpleSum_0
     s00_axi_rdata : OUT STD_LOGIC_VECTOR(31 DOWNTO 0);
     s00_axi_rresp : OUT STD_LOGIC_VECTOR(1 DOWNTO 0);
     s00_axi_rvalid : OUT STD_LOGIC;
-    s00_axi_rready : IN STD_LOGIC;
-    s00_axi_aclk : IN STD_LOGIC;
-    s00_axi_aresetn : IN STD_LOGIC 
+    s00_axi_rready : IN STD_LOGIC 
   );
 END COMPONENT;
 -- COMP_TAG_END ------ End COMPONENT Declaration ------------
@@ -84,6 +87,11 @@ END COMPONENT;
 ------------- Begin Cut here for INSTANTIATION Template ----- INST_TAG
 your_instance_name : simpleSum_0
   PORT MAP (
+    b1_en => b1_en,
+    b1_addr => b1_addr,
+    b1_dout => b1_dout,
+    s00_axi_aclk => s00_axi_aclk,
+    s00_axi_aresetn => s00_axi_aresetn,
     s00_axi_awaddr => s00_axi_awaddr,
     s00_axi_awprot => s00_axi_awprot,
     s00_axi_awvalid => s00_axi_awvalid,
@@ -102,9 +110,7 @@ your_instance_name : simpleSum_0
     s00_axi_rdata => s00_axi_rdata,
     s00_axi_rresp => s00_axi_rresp,
     s00_axi_rvalid => s00_axi_rvalid,
-    s00_axi_rready => s00_axi_rready,
-    s00_axi_aclk => s00_axi_aclk,
-    s00_axi_aresetn => s00_axi_aresetn
+    s00_axi_rready => s00_axi_rready
   );
 -- INST_TAG_END ------ End INSTANTIATION Template ---------
 

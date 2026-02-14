@@ -16,49 +16,43 @@ module nn_core #(
     input  wire [9:0]  pix_addr,   // 0..783
     input  wire [7:0]  pix_data,   // 0..255
 
+    // ---- BD-provided b1 ROM interface ----
+    output wire        b1_en,
+    output wire [4:0]  b1_addr,
+    input  wire [31:0] b1_dout,
+
     // result
     output reg  [3:0]  predicted
 );
 
-    // ------------------------------------------------------------
-    // Pixel buffer (simple internal memory)
-    // ------------------------------------------------------------
     reg [7:0] x_mem [0:N_IN-1];
 
     always @(posedge clk) begin
-        if (rst) begin
-            // no need to clear x_mem for this test
-        end else if (pix_we) begin
+        if (!rst && pix_we) begin
             if (pix_addr < N_IN)
                 x_mem[pix_addr] <= pix_data;
         end
     end
-    
-// ------------------------------------------------------------
-// Weight and bias memories (loaded at bitstream time)
-// ------------------------------------------------------------
-reg signed [7:0]  w1_flat [0:32*784-1];
-reg signed [7:0]  w2_flat [0:10*32-1];
-reg signed [31:0] b1 [0:31];
-reg signed [31:0] b2 [0:9];
 
-initial begin
-    $readmemh("src/w1.mem", w1_flat);
-    $readmemh("src/w2.mem", w2_flat);
-    $readmemh("src/b1.mem", b1);
-    $readmemh("src/b2.mem", b2);
-end
-always @(posedge clk) begin
-    if (rst) begin
-        predicted <= 0;
-        done <= 0;
-    end else if (start) begin
-        predicted <= 4'hF; // read real bias from mem
-        done <= 1;
-    end else begin
-        done <= 0;
+    assign b1_en   = 1'b1;
+    assign b1_addr = 5'd0;
+
+    reg start_d;
+
+    always @(posedge clk) begin
+        if (rst) begin
+            predicted <= 4'd0;
+            done      <= 1'b0;
+            start_d   <= 1'b0;
+        end else begin
+            done    <= 1'b0;
+            start_d <= start;
+
+            if (start_d) begin
+                predicted <= b1_dout[3:0];
+                done      <= 1'b1;
+            end
+        end
     end
-end
-
 
 endmodule

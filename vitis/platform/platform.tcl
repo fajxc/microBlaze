@@ -60,3 +60,9 @@ platform clean
 platform generate
 platform clean
 platform generate
+platform config -updatehw {C:/ENEL400/microBlaze/hw/microV/2-feb13.xsa}
+platform clean
+platform generate
+platform config -updatehw {C:/ENEL400/microBlaze/hw/microV/3-feb13.xsa}
+platform clean
+platform generate

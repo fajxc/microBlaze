@@ -47,7 +47,7 @@
 // DO NOT MODIFY THIS FILE.
 
 // IP VLNV: xilinx.com:user:simpleSum:1.0
-// IP Revision: 10
+// IP Revision: 19
 
 // The following must be inserted into your Verilog file for this
 // core to be instantiated. Change the instance name and port connections
@@ -55,6 +55,11 @@
 
 //----------- Begin Cut here for INSTANTIATION Template ---// INST_TAG
 simpleSum_0 your_instance_name (
+  .b1_en(b1_en),                      // output wire b1_en
+  .b1_addr(b1_addr),                  // output wire [4 : 0] b1_addr
+  .b1_dout(b1_dout),                  // input wire [31 : 0] b1_dout
+  .s00_axi_aclk(s00_axi_aclk),        // input wire s00_axi_aclk
+  .s00_axi_aresetn(s00_axi_aresetn),  // input wire s00_axi_aresetn
   .s00_axi_awaddr(s00_axi_awaddr),    // input wire [4 : 0] s00_axi_awaddr
   .s00_axi_awprot(s00_axi_awprot),    // input wire [2 : 0] s00_axi_awprot
   .s00_axi_awvalid(s00_axi_awvalid),  // input wire s00_axi_awvalid
@@ -73,9 +78,7 @@ simpleSum_0 your_instance_name (
   .s00_axi_rdata(s00_axi_rdata),      // output wire [31 : 0] s00_axi_rdata
   .s00_axi_rresp(s00_axi_rresp),      // output wire [1 : 0] s00_axi_rresp
   .s00_axi_rvalid(s00_axi_rvalid),    // output wire s00_axi_rvalid
-  .s00_axi_rready(s00_axi_rready),    // input wire s00_axi_rready
-  .s00_axi_aclk(s00_axi_aclk),        // input wire s00_axi_aclk
-  .s00_axi_aresetn(s00_axi_aresetn)  // input wire s00_axi_aresetn
+  .s00_axi_rready(s00_axi_rready)    // input wire s00_axi_rready
 );
 // INST_TAG_END ------ End INSTANTIATION Template ---------
 

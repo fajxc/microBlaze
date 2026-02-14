@@ -15,6 +15,10 @@
 	)
 	(
 		// Users to add ports here
+// b1 ROM interface (to connect in BD)
+output wire        b1_en,
+output wire [4:0]  b1_addr,
+input  wire [31:0] b1_dout,
 
 		// User ports ends
 		// Do not modify the ports beyond this line
@@ -378,6 +382,10 @@ nn_core #(
   .pix_addr(pix_addr_w),
   .pix_data(pix_data_w),
 
+  .b1_en(b1_en),
+  .b1_addr(b1_addr),
+  .b1_dout(b1_dout),
+    
   .predicted(nn_pred)
 );
 
