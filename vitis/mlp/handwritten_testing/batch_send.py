@@ -22,13 +22,6 @@ def pad_to_square(img: np.ndarray) -> np.ndarray:
 
 
 def preprocess_mnist_style(image_path: Path) -> np.ndarray:
-    """
-    IMPROVED preprocessing that better matches MNIST characteristics
-    
-    Key improvements:
-    1. Morphological dilation to thicken thin strokes
-    2. Intensity normalization for better contrast
-    """
     img_bgr = cv2.imread(str(image_path), cv2.IMREAD_COLOR)
     if img_bgr is None:
         raise FileNotFoundError(f"Could not read image: {image_path}")
@@ -47,11 +40,6 @@ def preprocess_mnist_style(image_path: Path) -> np.ndarray:
 
     proc = cv2.medianBlur(proc, 3)
 
-    # IMPROVEMENT 1: Thicken strokes slightly to match MNIST
-    # Adjust iterations (1-2) based on your stroke thickness
-    kernel = np.ones((2, 2), np.uint8)
-    proc = cv2.dilate(proc, kernel, iterations=1)
-
     contours, _ = cv2.findContours(proc, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
     if contours:
@@ -64,16 +52,10 @@ def preprocess_mnist_style(image_path: Path) -> np.ndarray:
     padded = pad_to_square(roi)
 
     resized20 = cv2.resize(padded, (20, 20), interpolation=cv2.INTER_AREA)
-    
-    # IMPROVEMENT 2: Boost intensity to use full range
-    # This helps match MNIST's high-contrast digits
-    if resized20.max() > 0:
-        resized20 = (resized20.astype(np.float32) / resized20.max() * 255).astype(np.uint8)
-    
     out28 = np.zeros((28, 28), dtype=np.uint8)
     out28[4:24, 4:24] = resized20
 
-    return out28
+    return out28.flatten().astype(np.uint8)
 
 
 def wait_for_ready_silent(ser, timeout=10.0) -> bool:
@@ -95,16 +77,6 @@ def send_image(ser, image_path: Path):
     print(f"==============================")
 
     img_flat = preprocess_mnist_style(image_path)
-    
-    # Save preprocessed image for debugging
-    debug_path = image_path.parent / f"preprocessed_{image_path.name}"
-    cv2.imwrite(str(debug_path), img_flat.reshape(28, 28))
-    
-    # Print stats
-    nonzero = np.count_nonzero(img_flat)
-    avg_intensity = img_flat[img_flat > 0].mean() if nonzero > 0 else 0
-    print(f"Preprocessed: {nonzero}/784 pixels, avg intensity: {avg_intensity:.1f}")
-    
     image_bytes = img_flat.tobytes()
 
     # Clear buffer
@@ -160,12 +132,11 @@ def main():
     base_path = Path(".")
 
     images = [base_path / f"digit{i}.png" for i in range(0, 10)]
-    
+
     print("Opening serial port...")
     ser = serial.Serial(PORT, BAUD, timeout=0.5)
     time.sleep(2)
 
-    results = []
     for img_path in images:
         if not img_path.exists():
             print(f"{img_path.name} not found. Skipping.")
@@ -173,11 +144,12 @@ def main():
 
         try:
             send_image(ser, img_path)
-            # Could track results here for final summary
         except Exception as e:
             print(f"Error testing {img_path.name}: {e}")
 
     ser.close()
+    print("\nAll tests complete.")
+
 
 if __name__ == "__main__":
     main()
