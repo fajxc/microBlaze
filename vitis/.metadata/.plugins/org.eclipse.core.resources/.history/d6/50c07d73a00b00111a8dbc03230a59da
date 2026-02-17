@@ -1,0 +1,80 @@
+#include "xil_io.h"
+#include "xil_printf.h"
+#include "sleep.h"
+#include "xuartlite_l.h"
+#include "xparameters.h"
+
+#define BASE 0x44A00000
+#define REG0 (BASE + 0x00)  // slv_reg0 start bit [0]
+#define REG1 (BASE + 0x04)  // slv_reg1 pixel data write triggers pix_we
+#define REG2 (BASE + 0x08)  // slv_reg2 pixel index [9:0]
+#define REG3 (BASE + 0x0C)  // slv_reg3 status: [0]=done, [7:4]=pred
+
+#ifndef UART_BASE
+#define UART_BASE XPAR_UARTLITE_0_BASEADDR
+#endif
+
+static inline u8 uart_getc_blocking()
+{
+    while (XUartLite_IsReceiveEmpty(UART_BASE)) {}
+    return (u8)Xil_In32(UART_BASE + XUL_RX_FIFO_OFFSET);
+}
+
+static inline void nn_write_pixel(u32 idx, u8 px)
+{
+    Xil_Out32(REG2, idx);
+    Xil_Out32(REG1, (u32)px); // this write generates pix_we pulse in your HDL
+}
+
+static inline void nn_start_pulse()
+{
+    Xil_Out32(REG0, 1);
+    usleep(1);
+    Xil_Out32(REG0, 0);
+}
+
+static inline u32 nn_wait_done()
+{
+    u32 r;
+    do {
+        r = Xil_In32(REG3);
+    } while ((r & 0x1u) == 0u);
+    return r;
+}
+
+int main()
+{
+    xil_printf("\r\n=== NN CORE PREDICTION TEST ===\r\n");
+
+    // start low
+    Xil_Out32(REG0, 0);
+    usleep(1000);
+
+    while (1)
+    {
+        xil_printf("\r\nSend 784 raw bytes over UART now...\r\n");
+        xil_printf("(28x28, row-major, values 0..255)\r\n");
+
+        for (u32 idx = 0; idx < 784; idx++) {
+            u8 px = uart_getc_blocking();
+            nn_write_pixel(idx, px);
+
+            if (idx == 0u || idx == 196u || idx == 392u || idx == 588u) {
+                xil_printf("  loaded %u / 784\r\n", (unsigned int)idx);
+            }
+        }
+
+        xil_printf("Image loaded. Starting inference...\r\n");
+
+        nn_start_pulse();
+
+        u32 status = nn_wait_done();
+        u32 pred   = (status >> 4) & 0xFu;
+
+        xil_printf("DONE. REG3=0x%08x pred=%u\r\n",
+                   (unsigned int)status,
+                   (unsigned int)pred);
+
+        usleep(1000);
+    }
+}

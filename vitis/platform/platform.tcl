@@ -71,3 +71,38 @@ platform clean
 platform generate
 platform clean
 platform generate
+platform config -updatehw {C:/ENEL400/microBlaze/hw/microV/lastTestMem.xsa}
+platform clean
+platform generate
+platform config -updatehw {C:/ENEL400/microBlaze/hw/microV/v1mac.xsa}
+platform clean
+platform generate
+platform clean
+platform generate
+platform config -updatehw {C:/ENEL400/microBlaze/hw/microV/feb16.xsa}
+platform clean
+platform generate
+platform config -updatehw {C:/ENEL400/microBlaze/hw/microV/feb16new.xsa}
+platform clean
+platform generate
+platform config -updatehw {C:/ENEL400/microBlaze/hw/microV/changed.xsa}
+platform clean
+platform generate
+platform config -updatehw {C:/ENEL400/microBlaze/hw/microV/pls_work.xsa}
+platform clean
+platform generate
+platform config -updatehw {C:/ENEL400/microBlaze/hw/microV/yaAllah.xsa}
+platform clean
+platform generate
+platform config -updatehw {C:/ENEL400/microBlaze/hw/microV/habibi.xsa}
+platform clean
+platform generate
+platform config -updatehw {C:/ENEL400/microBlaze/hw/microV/godhelpme.xsa}
+platform clean
+platform generate
+platform config -updatehw {C:/ENEL400/microBlaze/hw/microV/top.xsa}
+platform clean
+platform generate
+platform config -updatehw {C:/ENEL400/microBlaze/hw/microV/feb17.xsa}
+platform clean
+platform generate

@@ -33,6 +33,7 @@ output wire [3:0]  b2_addr,
 input  wire [31:0] b2_dout,
 
 
+
 		// User ports ends
 		// Do not modify the ports beyond this line
 
@@ -347,33 +348,43 @@ input  wire [31:0] b2_dout,
 	// Implement memory mapped register select and read logic generation
 	  assign S_AXI_RDATA = (axi_araddr[ADDR_LSB+OPT_MEM_ADDR_BITS:ADDR_LSB] == 3'h0) ? slv_reg0 : (axi_araddr[ADDR_LSB+OPT_MEM_ADDR_BITS:ADDR_LSB] == 3'h1) ? slv_reg1 : (axi_araddr[ADDR_LSB+OPT_MEM_ADDR_BITS:ADDR_LSB] == 3'h2) ? slv_reg2 : (axi_araddr[ADDR_LSB+OPT_MEM_ADDR_BITS:ADDR_LSB] == 3'h3) ? slv_reg3 : (axi_araddr[ADDR_LSB+OPT_MEM_ADDR_BITS:ADDR_LSB] == 3'h4) ? slv_reg4 : (axi_araddr[ADDR_LSB+OPT_MEM_ADDR_BITS:ADDR_LSB] == 3'h5) ? slv_reg5 : 0; 
 	// Add user logic here
-    // -------------------------
-    // Register write detect
-    // -------------------------
-    wire [2:0] wr_sel = (S_AXI_AWVALID) ?
-        S_AXI_AWADDR[ADDR_LSB+OPT_MEM_ADDR_BITS:ADDR_LSB] :
-        axi_awaddr[ADDR_LSB+OPT_MEM_ADDR_BITS:ADDR_LSB];
+// -------------------------
+// Register write detect (PIXEL WRITE: DATA+ADDR LOCKED TOGETHER)
+// -------------------------
+wire [2:0] wr_sel = (S_AXI_AWVALID) ?
+    S_AXI_AWADDR[ADDR_LSB+OPT_MEM_ADDR_BITS:ADDR_LSB] :
+    axi_awaddr[ADDR_LSB+OPT_MEM_ADDR_BITS:ADDR_LSB];
 
-    // one-cycle pulse when writing reg1 (pixel data)
-    reg wr_reg1_pulse;
+wire wr_fire = S_AXI_WVALID && S_AXI_WREADY;
+wire wr_reg1 = wr_fire && (wr_sel == 3'h1);
 
-    always @(posedge S_AXI_ACLK) begin
-        if (S_AXI_ARESETN == 1'b0) begin
-            wr_reg1_pulse <= 1'b0;
+// Latch pixel byte AND pixel address on the SAME cycle we assert pix_we.
+// This guarantees addr/data alignment even if REG2 write timing drifts.
+reg [7:0] pix_data_lat;
+reg [9:0] pix_addr_lat;
+reg       pix_we_lat;
+
+always @(posedge S_AXI_ACLK) begin
+  if (!S_AXI_ARESETN) begin
+    pix_data_lat <= 8'd0;
+    pix_addr_lat <= 10'd0;
+    pix_we_lat   <= 1'b0;
   end else begin
-    // pulse whenever a write data beat happens targeting reg1
-    wr_reg1_pulse <= (S_AXI_WVALID && S_AXI_WREADY && (wr_sel == 3'h1));
+    pix_we_lat <= wr_reg1;                 // 1-cycle pulse
+    if (wr_reg1) begin
+      pix_data_lat <= S_AXI_WDATA[7:0];    // data from bus
+      pix_addr_lat <= slv_reg2[9:0];       // lock address same cycle
+    end
   end
 end
 
-    wire pix_we = wr_reg1_pulse;
-
-    // -------------------------
-// Aliases
+// -------------------------
+// Aliases to nn_core
 // -------------------------
 wire        start_bit   = slv_reg0[0];
-wire [7:0]  pix_data_w  = slv_reg1[7:0];
-wire [9:0]  pix_addr_w  = slv_reg2[9:0];
+wire [7:0]  pix_data_w  = pix_data_lat;
+wire [9:0]  pix_addr_w  = pix_addr_lat;
+wire        pix_we      = pix_we_lat;
 
 wire        nn_done;
 wire [3:0]  nn_pred;
@@ -407,20 +418,29 @@ nn_core #(
   .b2_en(b2_en),
   .b2_addr(b2_addr),
   .b2_dout(b2_dout),
-    
+
   .predicted(nn_pred)
 );
 
 // -------------------------
-// HW drives slv_reg3
+// HW drives slv_reg3 (CLEAR ON START, UPDATE ON DONE)
 // -------------------------
+reg start_d;
 always @(posedge S_AXI_ACLK) begin
-  if (S_AXI_ARESETN == 1'b0) begin
+  if (!S_AXI_ARESETN) start_d <= 1'b0;
+  else start_d <= start_bit;
+end
+wire start_pulse = start_bit & ~start_d;
+
+always @(posedge S_AXI_ACLK) begin
+  if (!S_AXI_ARESETN) begin
     slv_reg3 <= 32'd0;
   end else begin
-  // keep old by default
-    if (nn_done) begin
-    slv_reg3 <= {24'd0, nn_pred, 3'd0, nn_done};
+    // clear status at the beginning of every run
+    if (start_pulse) begin
+      slv_reg3 <= 32'd0;
+    end else if (nn_done) begin
+      slv_reg3 <= {24'd0, nn_pred, 3'd0, 1'b1};
     end
   end
 end

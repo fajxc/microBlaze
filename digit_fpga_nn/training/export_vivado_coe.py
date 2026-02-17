@@ -58,7 +58,7 @@ def main():
 
     # Biases int32 (same as your teammate)
     b1q = np.round(b1 * s1).astype(np.int32)
-    b2q = np.round(b2 * s2 * (2**SHIFT)).astype(np.int32)
+    b2q = np.round(b2 * s2 * s1 / (2**SHIFT)).astype(np.int32)
 
     out_dir = os.path.join(os.path.dirname(__file__), "vivado_init")
     os.makedirs(out_dir, exist_ok=True)

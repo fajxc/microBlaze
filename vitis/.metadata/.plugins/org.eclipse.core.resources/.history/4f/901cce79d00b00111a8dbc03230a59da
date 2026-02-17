@@ -1,0 +1,134 @@
+#include "xil_io.h"
+#include "xil_printf.h"
+#include "sleep.h"
+#include "xuartlite_l.h"
+#include "xparameters.h"
+#include "xil_types.h"
+
+#define BASE 0x44A00000
+
+#define REG0 (BASE + 0x00)   // control: bit0=start (level)
+#define REG1 (BASE + 0x04)   // pixel data: [7:0]
+#define REG2 (BASE + 0x08)   // pixel index: [9:0]
+#define REG3 (BASE + 0x0C)   // status: [0]=done, [7:4]=pred
+
+
+#ifndef UART_BASE
+#define UART_BASE XPAR_UARTLITE_0_BASEADDR
+#endif
+
+#define INPUT_SIZE 784u
+
+static inline u8 uart_getc_blocking(void)
+{
+    while (XUartLite_IsReceiveEmpty(UART_BASE)) {}
+    return Xil_In8(UART_BASE + XUL_RX_FIFO_OFFSET);
+}
+
+static inline void uart_drain_rx(void)
+{
+    while (!XUartLite_IsReceiveEmpty(UART_BASE)) {
+        (void)Xil_In8(UART_BASE + XUL_RX_FIFO_OFFSET);
+    }
+}
+
+static inline void nn_write_pixel(u32 idx, u8 px)
+{
+    // Your AXI wrapper expects addr in REG2, then data in REG1
+    Xil_Out32(REG2, idx);
+    Xil_Out32(REG1, (u32)px);
+}
+
+static inline void nn_start_pulse(void)
+{
+    // start is edge-detected inside nn_core, so pulse is correct
+    Xil_Out32(REG0, 1u);
+    usleep(1);
+    Xil_Out32(REG0, 0u);
+}
+
+static inline u32 nn_wait_done_edge(void)
+{
+    // Important: REG3.done can be "sticky" in your wrapper.
+    // So we wait for it to be 0, then wait for it to become 1 again.
+
+    while (Xil_In32(REG3) & 0x1u) {
+        // wait for previous done to clear
+    }
+
+    while ((Xil_In32(REG3) & 0x1u) == 0u) {
+        // wait for new done to assert
+    }
+
+    return Xil_In32(REG3);
+}
+
+static void print_menu(void)
+{
+    xil_printf("\r\n=== MENU ===\r\n");
+    xil_printf("1: Send image + infer\r\n");
+    xil_printf("4: Show menu\r\n");
+}
+
+int main(void)
+{
+    xil_printf("\r\n\r\n=== NN CORE PREDICTION TEST (UART 9600) ===\r\n");
+
+    // Make sure start is low
+    Xil_Out32(REG0, 0u);
+    usleep(1000);
+
+    print_menu();
+
+    while (1)
+    {
+        xil_printf("\r\nCMD? ");
+        u8 cmd = uart_getc_blocking();
+        xil_printf("%c\r\n", cmd);
+
+        if (cmd == '4') {
+            print_menu();
+            continue;
+        }
+
+        if (cmd != '1') {
+            xil_printf("Unknown cmd '%c'\r\n", cmd);
+            continue;
+        }
+
+        // Drain any stale bytes so READY + 784 bytes are aligned
+        uart_drain_rx();
+
+        // Handshake to host
+        xil_printf("READY\r\n");
+
+        // Receive and write 784 pixels
+        for (u32 idx = 0; idx < INPUT_SIZE; idx++) {
+            u8 px = uart_getc_blocking();
+            nn_write_pixel(idx, px);
+
+            // Optional progress prints (comment out if it slows you)
+            if (idx == 0u || idx == 196u || idx == 392u || idx == 588u) {
+                xil_printf("  loaded %u / 784\r\n", (unsigned int)idx);
+            }
+        }
+
+        xil_printf("Image loaded. Starting inference...\r\n");
+
+        nn_start_pulse();
+
+        // Wait for a fresh done (edge-safe)
+        u32 status = nn_wait_done_edge();
+        u32 pred   = (status >> 4) & 0xFu;
+
+        xil_printf("DONE. REG3=0x%08x pred=%u\r\n",
+                   (unsigned int)status,
+                   (unsigned int)pred);
+
+        // Host parser expects this format
+        xil_printf("PRED:%u\r\n", (unsigned int)pred);
+    }
+
+    // never reached
+    // return 0;
+}

@@ -1,0 +1,97 @@
+#include "xil_io.h"
+#include "xil_printf.h"
+#include "sleep.h"
+#include "xuartlite_l.h"
+#include "xparameters.h"
+
+#define BASE 0x44A00000
+
+#define REG0 (BASE + 0x00)  // control: [0]=start
+#define REG1 (BASE + 0x04)  // pixel data: [7:0] (write triggers pix_we pulse)
+#define REG2 (BASE + 0x08)  // pixel index: [9:0]
+#define REG3 (BASE + 0x0C)  // status/result: [0]=done, [7:4]=pred
+
+// UART base (AXI UARTLite)
+#ifndef UART_BASE
+#define UART_BASE XPAR_UARTLITE_0_BASEADDR
+#endif
+
+static inline u8 uart_getc_blocking()
+{
+    while (XUartLite_IsReceiveEmpty(UART_BASE)) {}
+    return (u8)Xil_In32(UART_BASE + XUL_RX_FIFO_OFFSET);
+}
+
+static void nn_write_pixel(u32 idx, u8 px)
+{
+    // set pixel index first
+    Xil_Out32(REG2, idx);
+
+    // writing REG1 triggers wr_reg1_pulse -> pix_we for one cycle
+    Xil_Out32(REG1, (u32)px);
+}
+
+static void nn_start_pulse()
+{
+    Xil_Out32(REG0, 1);
+    usleep(1);
+    Xil_Out32(REG0, 0);
+}
+
+static u32 nn_wait_done()
+{
+    u32 r;
+    do {
+        r = Xil_In32(REG3);
+    } while ((r & 0x1) == 0);
+    return r;
+}
+
+int main()
+{
+    xil_printf("\r\n=== NN CORE PREDICTION TEST ===\r\n");
+    xil_printf("Register map:\r\n");
+    xil_printf("  REG0=0x%08x start\r\n", (unsigned int)REG0);
+    xil_printf("  REG1=0x%08x pix_data (WRITE triggers pix_we)\r\n", (unsigned int)REG1);
+    xil_printf("  REG2=0x%08x pix_idx\r\n", (unsigned int)REG2);
+    xil_printf("  REG3=0x%08x done/pred\r\n", (unsigned int)REG3);
+
+    // make sure start is low
+    Xil_Out32(REG0, 0);
+    usleep(1000);
+
+    while (1)
+    {
+        xil_printf("\r\nSend 784 raw bytes over UART now...\r\n");
+        xil_printf("(28x28, row-major, values 0..255)\r\n");
+
+        // 1) Receive 784 bytes over UART and write into nn_core
+        for (u32 idx = 0; idx < 784; idx++) {
+            u8 px = uart_getc_blocking();
+            nn_write_pixel(idx, px);
+
+            if ((idx % 196) == 0) {
+                xil_printf("  loaded %lu / 784\r\n", (unsigned long)idx);
+            }
+        }
+
+        xil_printf("Image loaded. Starting inference...\r\n");
+
+        // 2) Start pulse
+        nn_start_pulse();
+
+        // 3) Wait done + read status
+        u32 status = nn_wait_done();
+        u32 pred   = (status >> 4) & 0xF;
+
+        xil_printf("DONE. REG3=0x%08x pred=%lu\r\n",
+                   (unsigned int)status,
+                   (unsigned long)pred);
+
+        // tiny delay
+        usleep(1000);
+
+        // IMPORTANT: your nn_core holds done high until start is low.
+        // start is already low after pulse, so next iteration is fine.
+    }
+}
