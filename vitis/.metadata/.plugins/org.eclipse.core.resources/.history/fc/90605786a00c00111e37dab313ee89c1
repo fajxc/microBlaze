@@ -1,0 +1,239 @@
+#include "xil_io.h"
+#include "xil_printf.h"
+#include "sleep.h"
+#include "xuartlite_l.h"
+#include "xparameters.h"
+#include "xil_types.h"
+#include <stdint.h>
+#include <string.h>
+
+#include "weights_w1.h"
+#include "weights_b1.h"
+#include "weights_w2.h"
+#include "weights_b2.h"
+
+#define BASE 0x44A00000
+#define REG0 (BASE + 0x00)
+#define REG1 (BASE + 0x04)
+#define REG2 (BASE + 0x08)
+#define REG3 (BASE + 0x0C)
+#define REG4 (BASE + 0x10)
+#define REG5 (BASE + 0x14)
+
+#ifndef UART_BASE
+#define UART_BASE XPAR_UARTLITE_0_BASEADDR
+#endif
+
+#define INPUT_SIZE  784
+#define HIDDEN_SIZE 32
+#define OUTPUT_SIZE 10
+
+uint8_t  input_image[INPUT_SIZE];
+int32_t  hidden_layer[HIDDEN_SIZE];
+int32_t  output_layer[OUTPUT_SIZE];
+
+static inline u8 uart_getc_blocking(void) {
+    while (XUartLite_IsReceiveEmpty(UART_BASE)) {}
+    return Xil_In8(UART_BASE + XUL_RX_FIFO_OFFSET);
+}
+
+static inline void nn_write_pixel(u32 idx, u8 px) {
+    Xil_Out32(REG2, idx);
+    Xil_Out32(REG1, (u32)px);
+}
+
+static inline void nn_start_pulse(void) {
+    Xil_Out32(REG0, 1u);
+    usleep(10);
+    Xil_Out32(REG0, 0u);
+}
+
+static inline u32 nn_wait_done(void) {
+    while (Xil_In32(REG3) & 0x1u) {}
+    while ((Xil_In32(REG3) & 0x1u) == 0u) {}
+    return Xil_In32(REG3);
+}
+
+// Software MLP
+static inline int32_t relu(int32_t x) { return (x > 0) ? x : 0; }
+
+void layer1_forward(const uint8_t* input, int32_t* output) {
+    for (int h = 0; h < HIDDEN_SIZE; h++) {
+        int32_t accum = 0;
+        for (int i = 0; i < INPUT_SIZE; i++)
+            accum += (int32_t)w1[h][i] * (int32_t)input[i];
+        accum += b1[h];
+        output[h] = relu(accum);
+    }
+}
+
+void layer2_forward(const int32_t* hidden, int32_t* output) {
+    for (int o = 0; o < OUTPUT_SIZE; o++) {
+        int32_t accum = 0;
+        for (int h = 0; h < HIDDEN_SIZE; h++) {
+            int32_t hidden_scaled = hidden[h] / 256;
+            accum += (int32_t)w2[o][h] * hidden_scaled;
+        }
+        accum += b2[o];
+        output[o] = accum;
+    }
+}
+
+int argmax(const int32_t* array, int length) {
+    int max_idx = 0;
+    int32_t max_val = array[0];
+    for (int i = 1; i < length; i++)
+        if (array[i] > max_val) { max_val = array[i]; max_idx = i; }
+    return max_idx;
+}
+
+int mlp_inference(const uint8_t* img) {
+    layer1_forward(img, hidden_layer);
+    layer2_forward(hidden_layer, output_layer);
+    return argmax(output_layer, OUTPUT_SIZE);
+}
+
+// Run one fixed-input test: all zeros except pixel 0 = 255
+// Prints HW and SW predictions. Run 3 times to check consistency.
+static void run_fixed_input_test(void) {
+    xil_printf("=== FIXED INPUT TEST ===\r\n");
+
+    for (int run = 0; run < 3; run++) {
+        // Write all pixels = 0
+        for (u32 idx = 0; idx < 784u; idx++)
+            nn_write_pixel(idx, 0u);
+        // Overwrite pixel 0 = 255
+        nn_write_pixel(0u, 255u);
+
+        // Hardware inference
+        nn_start_pulse();
+        u32 status  = nn_wait_done();
+        u32 hw_pred = (status >> 4) & 0xFu;
+
+        // Software inference on same input
+        memset(input_image, 0, INPUT_SIZE);
+        input_image[0] = 255;
+        int sw_pred = mlp_inference(input_image);
+
+        // Read HW debug AFTER done
+        int32_t hw_logit0 = (int32_t)Xil_In32(REG4); // score0 = acc0 + b2
+        int32_t hw_acc0   = (int32_t)Xil_In32(REG5); // acc0 (no bias)
+
+        int32_t sw_logit0 = output_layer[0];
+        int32_t sw_acc0   = sw_logit0 - (int32_t)b2[0];
+
+        xil_printf("DBG: HW acc0=%d HW logit0=%d | SW acc0=%d SW logit0=%d\r\n",
+                   hw_acc0, hw_logit0, sw_acc0, sw_logit0);
+
+
+        xil_printf("Run %d: HW:%u SW:%u %s\r\n",
+                   run,
+                   (unsigned)hw_pred,
+                   (unsigned)sw_pred,
+                   (hw_pred == (u32)sw_pred) ? "MATCH" : "MISMATCH");
+    }
+
+    // Also print what SW hidden[0..7] looks like for this input
+    xil_printf("SW hidden[0..7] for fixed input: ");
+    for (int i = 0; i < 8; i++)
+        xil_printf("%d ", hidden_layer[i]);
+    xil_printf("\r\n");
+
+    xil_printf("=== END FIXED INPUT TEST ===\r\n");
+}
+
+int main(void) {
+    xil_printf("\r\n=== HW vs SW COMPARISON TEST ===\r\n");
+    Xil_Out32(REG0, 0u);
+    usleep(1000);
+
+    // Run fixed input test once at startup before accepting any images
+    run_fixed_input_test();
+
+    while (1) {
+        xil_printf("\r\nCMD? (1=send image, 4=menu)\r\n");
+        u8 cmd = uart_getc_blocking();
+
+        if (cmd == '4') {
+            xil_printf("1: Send image\r\n4: Menu\r\n");
+            continue;
+        }
+        if (cmd != '1') {
+            xil_printf("Unknown cmd '%c'\r\n", cmd);
+            continue;
+        }
+
+        // flush UART
+        while (!XUartLite_IsReceiveEmpty(UART_BASE))
+            (void)Xil_In8(UART_BASE + XUL_RX_FIFO_OFFSET);
+
+        xil_printf("READY\r\n");
+
+        // Receive pixels, write to HW and store locally
+        for (u32 idx = 0; idx < 784u; idx++) {
+            u8 px = uart_getc_blocking();
+            input_image[idx] = px;
+            nn_write_pixel(idx, px);
+        }
+
+        // Run hardware inference
+        nn_start_pulse();
+        u32 status  = nn_wait_done();
+        xil_printf("STATUS=0x%08x\r\n", (unsigned)status);
+        u32 hw_pred = (status >> 4) & 0xFu;
+
+        // Run software inference on same pixels
+        int sw_pred = mlp_inference(input_image);
+
+        // Read HW debug AFTER done
+        int32_t hw_logit0 = (int32_t)Xil_In32(REG4); // score0 = acc0 + b2
+        int32_t hw_acc0   = (int32_t)Xil_In32(REG5); // acc0 (no bias)
+
+        int32_t sw_logit0 = output_layer[0];
+        int32_t sw_acc0   = sw_logit0 - (int32_t)b2[0];
+
+        xil_printf("DBG: HW acc0=%d HW logit0=%d | SW acc0=%d SW logit0=%d\r\n",
+                   hw_acc0, hw_logit0, sw_acc0, sw_logit0);
+
+        xil_printf("SW logits: ");
+        for (int o=0;o<10;o++) xil_printf("%d ", output_layer[o]);
+        xil_printf("\r\nSW pred=%d\r\n", sw_pred);
+        xil_printf("SW logit[HWpred]=%d\r\n", output_layer[hw_pred]);
+
+        // Debug layer 2 manually - first 4 hidden neurons for output 0
+        xil_printf("L2 debug o=0: ");
+        int32_t l2_acc = 0;
+        for (int h = 0; h < 4; h++) {
+            int32_t hscaled = hidden_layer[h] / 256;
+            int32_t contrib = (int32_t)w2[0][h] * hscaled;
+            l2_acc += contrib;
+            xil_printf("h%d: w=%d hs=%d c=%d | ", h, (int)w2[0][h], (int)hscaled, (int)contrib);
+        }
+        xil_printf("acc=%d\r\n", l2_acc);
+
+        // Debug: recompute hidden with explicit 32-bit truncation to match hardware
+        xil_printf("HW-equiv hidden[0..7]: ");
+        for (int h = 0; h < 8; h++) {
+            int64_t accum64 = 0;
+            for (int i = 0; i < 784; i++)
+                accum64 += (int64_t)w1[h][i] * (int64_t)input_image[i];
+            accum64 += (int64_t)b1[h];
+            int32_t h_val = (accum64 > 0) ? (int32_t)accum64 : 0;
+            xil_printf("%d ", h_val);
+        }
+
+        xil_printf("\r\n");
+
+        // Print both predictions
+        xil_printf("HW:%u SW:%u\r\n", (unsigned)hw_pred, (unsigned)sw_pred);
+
+        // Print hidden layer values for first 8 neurons
+        xil_printf("SW hidden[0..7]: ");
+        for (int i = 0; i < 8; i++)
+            xil_printf("%d ", hidden_layer[i]);
+        xil_printf("\r\n");
+
+        // Send prediction in format Python expects
+        xil_printf("PRED:%u\r\n", (unsigned)sw_pred);
+    }
+}

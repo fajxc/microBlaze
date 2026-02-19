@@ -106,3 +106,92 @@ platform generate
 platform config -updatehw {C:/ENEL400/microBlaze/hw/microV/feb17.xsa}
 platform clean
 platform generate
+platform active {platform}
+platform config -updatehw {C:/ENEL400/microBlaze/hw/microV/top.xsa}
+platform clean
+platform generate
+platform config -updatehw {C:/ENEL400/microBlaze/hw/microV/1.xsa}
+platform clean
+platform generate
+platform clean
+platform generate
+platform config -updatehw {C:/ENEL400/microBlaze/hw/microV/2.xsa}
+platform clean
+platform generate
+platform config -updatehw {C:/ENEL400/microBlaze/hw/microV/3.xsa}
+platform clean
+platform generate
+platform generate -domains 
+platform config -updatehw {C:/ENEL400/microBlaze/hw/microV/5.xsa}
+platform clean
+platform generate
+platform clean
+platform generate
+platform generate -domains 
+platform clean
+platform generate
+platform config -updatehw {C:/ENEL400/microBlaze/hw/microV/6.xsa}
+platform clean
+platform generate
+platform clean
+platform generate
+platform clean
+platform generate
+platform clean
+platform generate
+platform config -updatehw {C:/ENEL400/microBlaze/hw/microV/7.xsa}
+platform clean
+platform generate
+platform clean
+platform generate
+platform config -updatehw {C:/ENEL400/microBlaze/hw/microV/8.xsa}
+platform clean
+platform generate
+platform clean
+platform generate
+platform config -updatehw {C:/ENEL400/microBlaze/hw/microV/FinalWorking.xsa}
+platform clean
+platform generate
+platform clean
+platform generate
+platform config -updatehw {C:/ENEL400/microBlaze/hw/microV/RealFinal.xsa}
+platform clean
+platform generate
+platform clean
+platform generate
+platform config -updatehw {C:/ENEL400/microBlaze/hw/microV/10.xsa}
+platform clean
+platform generate
+platform clean
+platform generate
+platform clean
+platform generate
+platform clean
+platform generate
+platform clean
+platform generate
+platform active {platform}
+platform config -updatehw {C:/ENEL400/microBlaze/hw/microV/15.xsa}
+platform clean
+platform generate
+platform clean
+platform generate
+platform config -updatehw {C:/ENEL400/microBlaze/hw/microV/1.xsa}
+platform clean
+platform generate
+platform clean
+platform generate
+platform clean
+platform generate
+platform config -updatehw {C:/ENEL400/microBlaze/hw/microV/2.xsa}
+platform clean
+platform generate
+platform clean
+platform generate
+platform clean
+platform generate
+platform config -updatehw {C:/ENEL400/microBlaze/hw/microV/test_w2_hs.xsa}
+platform clean
+platform generate
+platform clean
+platform generate

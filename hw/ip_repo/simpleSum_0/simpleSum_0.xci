@@ -3,7 +3,7 @@
   "ip_inst": {
     "xci_name": "simpleSum_0",
     "component_reference": "xilinx.com:user:simpleSum:1.0",
-    "ip_revision": "36",
+    "ip_revision": "49",
     "gen_directory": ".",
     "parameters": {
       "component_parameters": {
@@ -32,7 +32,7 @@
       },
       "runtime_parameters": {
         "IPCONTEXT": [ { "value": "IP_Flow" } ],
-        "IPREVISION": [ { "value": "36" } ],
+        "IPREVISION": [ { "value": "49" } ],
         "MANAGED": [ { "value": "TRUE" } ],
         "OUTPUTDIR": [ { "value": "." } ],
         "SELECTEDSIMMODEL": [ { "value": "" } ],

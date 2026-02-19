@@ -129,6 +129,8 @@ def send_image_uart(ser, image_flat, verbose=True):
                         pred_str = line.split(':')[1]
                         prediction = int(pred_str)
                         return prediction
+                    elif line.startswith("HW:") or line.startswith("SW"):
+                        print(f"DEBUG: {line}")
             except Exception as e:
                 if verbose:
                     print(f"Parse error: {e}")
@@ -196,7 +198,7 @@ def interactive_mode(ser, images, labels):
     print("  t <index> - Test image at index")
     print("  r <n>     - Test n random images")
     print("  z         - Send all-zero image (784 bytes of 0)")
-    print("  p <i>     - Send image with x[i]=1, rest 0 (e.g. p 0 or p 1)")
+    print("  p <i> [v] - Send image with x[i]=v, rest 0 (v=1 if omitted; e.g. p 0 255)")
     print("  s         - Trigger FPGA self-test")
     print("  i         - Display FPGA network info")
     print("  c         - Test connection")
@@ -279,7 +281,7 @@ def interactive_mode(ser, images, labels):
                     
                     # Send image
                     image_flat = images[idx].flatten()
-                    prediction = send_image_uart(ser, image_flat, verbose=False)
+                    prediction = send_image_uart(ser, image_flat, verbose=True)
                     
                     if prediction is not None:
                         total += 1
@@ -321,21 +323,23 @@ def interactive_mode(ser, images, labels):
             read_responses(ser, timeout=1.0, verbose=False)
         
         elif cmd.startswith('p'):
-            # Send single-pixel image: x[i]=1, rest 0
+            # Send single-pixel image: x[i]=value, rest 0 (value 0-255, default 1)
             try:
                 parts = cmd.split()
                 if len(parts) < 2:
-                    print("Usage: p <pixel_index>  (e.g. p 0 or p 1)")
+                    print("Usage: p <pixel_index> [value]  (e.g. p 0 255 or p 0 for x[0]=1)")
                     continue
                 idx = int(parts[1])
+                val = int(parts[2]) if len(parts) > 2 else 1
+                val = max(0, min(255, val))
                 if idx < 0 or idx >= INPUT_SIZE:
                     print(f"Pixel index must be 0..{INPUT_SIZE-1}")
                     continue
-                print(f"\nSending image with x[{idx}]=1, rest 0...")
+                print(f"\nSending image with x[{idx}]={val}, rest 0...")
                 send_command(ser, '1')
                 time.sleep(0.5)
                 img = np.zeros(INPUT_SIZE, dtype=np.uint8)
-                img[idx] = 1
+                img[idx] = val
                 prediction = send_image_uart(ser, img)
                 if prediction is not None:
                     print(f"\nResult: Pred={prediction}")
@@ -344,7 +348,7 @@ def interactive_mode(ser, images, labels):
                 time.sleep(0.5)
                 read_responses(ser, timeout=1.0, verbose=False)
             except ValueError:
-                print("Usage: p <pixel_index>  (integer 0..783)")
+                print("Usage: p <pixel_index> [value]  (index 0..783, value 0..255)")
                 
         elif cmd.startswith('s'):
             # Self-test
@@ -395,13 +399,14 @@ def send_zeros_only(port, baudrate=9600):
     else:
         print("No prediction received")
 
-def send_single_pixel_only(port, pixel_index, baudrate=9600):
-    """Send image with x[pixel_index]=1 and all others 0. No MNIST needed."""
+def send_single_pixel_only(port, pixel_index, value=1, baudrate=9600):
+    """Send image with x[pixel_index]=value and all others 0. No MNIST needed. value 0-255."""
     if pixel_index < 0 or pixel_index >= INPUT_SIZE:
         print(f"Pixel index must be 0..{INPUT_SIZE-1}")
         return
+    value = max(0, min(255, int(value)))
     print("="*60)
-    print(f" Send single-pixel image (x[{pixel_index}]=1, rest 0)")
+    print(f" Send single-pixel image (x[{pixel_index}]={value}, rest 0)")
     print("="*60)
     print(f"\nOpening serial port {port} at {baudrate} baud...")
     try:
@@ -419,8 +424,8 @@ def send_single_pixel_only(port, pixel_index, baudrate=9600):
         return
     time.sleep(2)
     img = np.zeros(INPUT_SIZE, dtype=np.uint8)
-    img[pixel_index] = 1
-    print(f"Sending 784 bytes (only x[{pixel_index}]=1)...")
+    img[pixel_index] = value
+    print(f"Sending 784 bytes (only x[{pixel_index}]={value})...")
     send_command(ser, '1')
     time.sleep(0.5)
     pred = send_image_uart(ser, img)
@@ -447,14 +452,17 @@ def main():
         return
     if '--pixel' in args:
         pixel_idx = 0
+        pixel_val = 1
         for j, a in enumerate(sys.argv[1:], start=1):
             if a.lower() == '--pixel' and j < len(sys.argv) - 1:
                 try:
                     pixel_idx = int(sys.argv[j + 1])
+                    if j + 2 < len(sys.argv):
+                        pixel_val = int(sys.argv[j + 2])
                 except (ValueError, IndexError):
                     pass
                 break
-        send_single_pixel_only(port, pixel_idx, BAUDRATE)
+        send_single_pixel_only(port, pixel_idx, pixel_val, BAUDRATE)
         return
     
     # Check command line arguments for port

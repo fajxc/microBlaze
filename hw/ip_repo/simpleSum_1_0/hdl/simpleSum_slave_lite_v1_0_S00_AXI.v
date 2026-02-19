@@ -11,7 +11,7 @@
 		// Width of S_AXI data bus
 		parameter integer C_S_AXI_DATA_WIDTH	= 32,
 		// Width of S_AXI address bus
-		parameter integer C_S_AXI_ADDR_WIDTH	= 5
+		parameter integer C_S_AXI_ADDR_WIDTH	= 6
 	)
 	(
 		// Users to add ports here
@@ -127,6 +127,8 @@ input  wire [31:0] b2_dout,
 	reg [C_S_AXI_DATA_WIDTH-1:0]	slv_reg3; // status/result: [0]=done, [7:4]=pred
 	reg [C_S_AXI_DATA_WIDTH-1:0]	slv_reg4; // unused
 	reg [C_S_AXI_DATA_WIDTH-1:0]	slv_reg5; // unused
+	reg [C_S_AXI_DATA_WIDTH-1:0]    slv_reg6;
+    reg [C_S_AXI_DATA_WIDTH-1:0]    slv_reg7;
 	integer	 byte_index;
     // ------------------------------------------------------------
     // Toy accelerator internal control
@@ -284,14 +286,15 @@ input  wire [31:0] b2_dout,
 	                // Respective byte enables are asserted as per write strobes 
 	                // Slave register 5
 	                //slv_reg5[(byte_index*8) +: 8] <= S_AXI_WDATA[(byte_index*8) +: 8];
-	              end  
+	              end 
+
 	          default : begin
 	                      slv_reg0 <= slv_reg0;
 	                      //slv_reg1 <= slv_reg1;
 	                      slv_reg2 <= slv_reg2;
-	                      slv_reg3 <= slv_reg3;
+
 	                      //slv_reg4 <= slv_reg4;
-	                      slv_reg5 <= slv_reg5;
+
 	                    end
 	        endcase
 	      end
@@ -346,7 +349,15 @@ input  wire [31:0] b2_dout,
 	          end                                       
 	        end                                         
 	// Implement memory mapped register select and read logic generation
-	  assign S_AXI_RDATA = (axi_araddr[ADDR_LSB+OPT_MEM_ADDR_BITS:ADDR_LSB] == 3'h0) ? slv_reg0 : (axi_araddr[ADDR_LSB+OPT_MEM_ADDR_BITS:ADDR_LSB] == 3'h1) ? slv_reg1 : (axi_araddr[ADDR_LSB+OPT_MEM_ADDR_BITS:ADDR_LSB] == 3'h2) ? slv_reg2 : (axi_araddr[ADDR_LSB+OPT_MEM_ADDR_BITS:ADDR_LSB] == 3'h3) ? slv_reg3 : (axi_araddr[ADDR_LSB+OPT_MEM_ADDR_BITS:ADDR_LSB] == 3'h4) ? slv_reg4 : (axi_araddr[ADDR_LSB+OPT_MEM_ADDR_BITS:ADDR_LSB] == 3'h5) ? slv_reg5 : 0; 
+assign S_AXI_RDATA = 
+    (axi_araddr[ADDR_LSB+OPT_MEM_ADDR_BITS:ADDR_LSB] == 3'h0) ? slv_reg0 :
+    (axi_araddr[ADDR_LSB+OPT_MEM_ADDR_BITS:ADDR_LSB] == 3'h1) ? slv_reg1 :
+    (axi_araddr[ADDR_LSB+OPT_MEM_ADDR_BITS:ADDR_LSB] == 3'h2) ? slv_reg2 :
+    (axi_araddr[ADDR_LSB+OPT_MEM_ADDR_BITS:ADDR_LSB] == 3'h3) ? slv_reg3 :
+    (axi_araddr[ADDR_LSB+OPT_MEM_ADDR_BITS:ADDR_LSB] == 3'h4) ? slv_reg4 :
+    (axi_araddr[ADDR_LSB+OPT_MEM_ADDR_BITS:ADDR_LSB] == 3'h5) ? slv_reg5 :
+    (axi_araddr[ADDR_LSB+OPT_MEM_ADDR_BITS:ADDR_LSB] == 3'h6) ? slv_reg6 :
+    (axi_araddr[ADDR_LSB+OPT_MEM_ADDR_BITS:ADDR_LSB] == 3'h7) ? slv_reg7 : 0;
 	// Add user logic here
 // -------------------------
 // Register write detect (PIXEL WRITE: DATA+ADDR LOCKED TOGETHER)
@@ -363,17 +374,24 @@ wire wr_reg1 = wr_fire && (wr_sel == 3'h1);
 reg [7:0] pix_data_lat;
 reg [9:0] pix_addr_lat;
 reg       pix_we_lat;
+reg [9:0] pix_addr_hold;
 
 always @(posedge S_AXI_ACLK) begin
   if (!S_AXI_ARESETN) begin
-    pix_data_lat <= 8'd0;
-    pix_addr_lat <= 10'd0;
-    pix_we_lat   <= 1'b0;
+    pix_addr_hold <= 10'd0;
+    pix_data_lat  <= 8'd0;
+    pix_addr_lat  <= 10'd0;
+    pix_we_lat    <= 1'b0;
   end else begin
-    pix_we_lat <= wr_reg1;                 // 1-cycle pulse
+    // latch address the moment REG2 is written
+    if (wr_fire && (wr_sel == 3'h2))
+      pix_addr_hold <= S_AXI_WDATA[9:0];
+
+    // latch data+addr together when REG1 is written
+    pix_we_lat <= wr_reg1;
     if (wr_reg1) begin
-      pix_data_lat <= S_AXI_WDATA[7:0];    // data from bus
-      pix_addr_lat <= slv_reg2[9:0];       // lock address same cycle
+      pix_data_lat <= S_AXI_WDATA[7:0];
+      pix_addr_lat <= pix_addr_hold;  // use held address, not slv_reg2
     end
   end
 end
@@ -388,7 +406,11 @@ wire        pix_we      = pix_we_lat;
 
 wire        nn_done;
 wire [3:0]  nn_pred;
-
+wire signed [31:0] nn_dbg_score0;
+wire signed [31:0] nn_dbg_acc0;
+wire signed [31:0] nn_dbg_b20;
+wire signed [31:0] dbg_partial4_o0;
+wire signed [31:0] dbg_w2_00;
 // -------------------------
 // NN core instance
 // -------------------------
@@ -419,6 +441,11 @@ nn_core #(
   .b2_addr(b2_addr),
   .b2_dout(b2_dout),
 
+  .dbg_score0(nn_dbg_score0),
+  .dbg_acc0  (nn_dbg_acc0),
+  .dbg_b20   (nn_dbg_b20),
+  .dbg_partial4_o0(dbg_partial4_o0),
+  .dbg_w2_00(dbg_w2_00),
   .predicted(nn_pred)
 );
 
@@ -444,7 +471,50 @@ always @(posedge S_AXI_ACLK) begin
     end
   end
 end
-
+// -------------------------
+// HW drives slv_reg4 (debug logit for class 0)
+// -------------------------
+always @(posedge S_AXI_ACLK) begin
+  if (!S_AXI_ARESETN) begin
+    slv_reg4 <= 32'd0;
+  end else begin
+    // optional: clear at start so you know it's "fresh"
+    if (start_pulse) begin
+      slv_reg4 <= 32'd0;
+    end else if (nn_done) begin
+      slv_reg4 <= nn_dbg_score0;   // capture when inference finishes
+    end
+  end
+end
+// -------------------------
+// HW drives slv_reg5 (debug acc0 before bias)
+// -------------------------
+always @(posedge S_AXI_ACLK) begin
+  if (!S_AXI_ARESETN) begin
+    slv_reg5 <= 32'd0;
+  end else begin
+    if (start_pulse) begin
+      slv_reg5 <= 32'd0;
+    end else if (nn_done) begin
+      slv_reg5 <= nn_dbg_acc0;
+    end
+  end
+end
+//hw drives 6 and 7
+always @(posedge S_AXI_ACLK) begin
+  if (!S_AXI_ARESETN) begin
+    slv_reg6 <= 32'd0;
+    slv_reg7 <= 32'd0;
+  end else begin
+    if (start_pulse) begin
+      slv_reg6 <= 32'd0;
+      slv_reg7 <= 32'd0;
+    end else if (nn_done) begin
+      slv_reg6 <= dbg_partial4_o0;
+      slv_reg7 <= dbg_w2_00;
+    end
+  end
+end
 	// User logic ends
 
 	endmodule

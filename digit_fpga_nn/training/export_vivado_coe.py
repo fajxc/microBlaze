@@ -58,11 +58,16 @@ def main():
 
     # Biases int32 (same as your teammate)
     b1q = np.round(b1 * s1).astype(np.int32)
-    b2q = np.round(b2 * s2 * s1 / (2**SHIFT)).astype(np.int32)
+    b2q = np.round(b2 * s2 * (2**SHIFT)).astype(np.int32)
 
     out_dir = os.path.join(os.path.dirname(__file__), "vivado_init")
     os.makedirs(out_dir, exist_ok=True)
-
+    print("s1 =", s1)
+    print("s2 =", s2)
+    print("b2 float (first 5):", b2[:5])
+    print("b2q OLD formula:", np.round(b2 * s2 * s1 / (2**SHIFT)).astype(np.int32)[:5])
+    print("b2q NEW formula:", np.round(b2 * s2 * (2**SHIFT)).astype(np.int32)[:5])
+    print("b2q actually writing:", b2q[:5])
     # Write COE files
     write_coe(os.path.join(out_dir, "w1_i8.coe"), i8_to_hex_list(w1q), values_per_line=32)
     write_coe(os.path.join(out_dir, "w2_i8.coe"), i8_to_hex_list(w2q), values_per_line=32)
