@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="ASCII"?>
+<sdkproject:SdkProject xmi:version="2.0" xmlns:xmi="http://www.omg.org/XMI" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:sdkproject="http://www.xilinx.com/sdkproject" name="debug123" location="C:/ENEL400/microBlaze/vitis/debug123" platform="C:/ENEL400/microBlaze/vitis/Debug/export/Debug/Debug.xpfm" platformUID="xilinx:basys3::0.0(custom)" systemProject="debug123_system" sysConfig="Debug" runtime="C/C++" cpu="standalone_domain" cpuInstance="microblaze_riscv_0" os="standalone" mssSignature="198fab77204c44a16187f31fcf0c9e5c">
+  <configuration name="Debug" id="xilinx.gnu.riscv.exe.debug.672914039">
+    <configBuildOptions xsi:type="sdkproject:SdkOptions"/>
+    <lastBuildOptions xsi:type="sdkproject:SdkOptions"/>
+  </configuration>
+  <configuration name="Release" id="xilinx.gnu.riscv.exe.release.375552411" dirty="true">
+    <configBuildOptions xsi:type="sdkproject:SdkOptions"/>
+  </configuration>
+  <template appTemplateName="empty_application"/>
+</sdkproject:SdkProject>

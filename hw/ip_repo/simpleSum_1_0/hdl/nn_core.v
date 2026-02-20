@@ -140,6 +140,14 @@ endfunction
     reg [5:0] hh_d1;
     reg [3:0] oo_d1;
     
+// tags for what address/hs we ISSUED
+reg [5:0] hh_issued;
+reg [3:0] oo_issued;
+
+// tags for what operands we are ABOUT TO USE (latched in WAIT)
+reg [5:0] hh_use_tag;
+reg [3:0] oo_use_tag;
+    
     reg signed [63:0] l1_sum;
 
     reg signed [63:0] acc;        // wide accumulator
@@ -157,7 +165,8 @@ endfunction
 
 
     // Multipliers (signed weights, unsigned x, signed hidden_scaled)
-    wire signed [15:0] mul_w1x = w1_q * $signed({1'b0, x_q});        // int8 * uint8
+    wire signed [7:0]  w1_now  = $signed(w1_dout);
+    wire signed [15:0] mul_w1x = w1_now * $signed({1'b0, x_q});
     wire signed [39:0] mul_w2h = w2_q * $signed(hscaled_q_d1);          // int8 * int32
     
     
@@ -168,6 +177,8 @@ endfunction
     
     wire signed [63:0] term_use = $signed(w2_use) * $signed(hs_use);
     wire signed [63:0] acc_use_next = acc + term_use;
+    wire [8:0] w2_addr_used = w2_index(oo_use_tag, hh_use_tag);
+
     // ============================================================
     // FSM (explicit PRIME waits for 1-cycle ROM)
     // ============================================================
@@ -180,12 +191,14 @@ endfunction
                S_L1_FINISH   = 4'd4,
 
                // Layer 2
+               
                S_L2_SET      = 4'd5,
                S_L2_WAIT     = 4'd6,
                S_L2_MAC      = 4'd7,
                S_L2_FINISHO  = 4'd8,
-
-               S_DONE        = 4'd9;
+                
+               S_DONE        = 4'd9,
+               S_L2_PRIME0  = 4'd10;
 
     reg [3:0] state;
 
@@ -205,7 +218,10 @@ endfunction
             hscaled_q_d1 <= 32'sd0;
             w2_use <= 8'sd0;
             hs_use <= 32'sd0;
-
+hh_issued  <= 6'd0;
+oo_issued  <= 4'd0;
+hh_use_tag <= 6'd0;
+oo_use_tag <= 4'd0;
             
 
             b1_en_r <= 1'b0; w1_en_r <= 1'b0; w2_en_r <= 1'b0; b2_en_r <= 1'b0;
@@ -275,7 +291,10 @@ endfunction
             S_L1_MAC: begin
                 // accumulate using the weight/data from the address issued 1 cycle ago
                 acc <= acc + $signed({{48{mul_w1x[15]}}, mul_w1x});
-
+                if (hh == 6'd0 && ii == 10'd0) begin
+                    dbg_score0       <= {24'd0, x_q};                 // REG4: x0 used
+                    dbg_partial4_o0  <= {{24{w1_now[7]}}, w1_now};    // REG6: w1_00 used
+                end
                 if (ii < N_IN-1) begin
                     // issue next address and latch its x
                     ii <= ii + 10'd1;
@@ -300,6 +319,8 @@ endfunction
                 // bias is in b1_q (address set at start of this hh)
                 // friend does int32 accum; we clamp by truncating to 32 after ReLU
                 // ReLU
+                if (hh == 6'd0) dbg_score0 <= b1_q;   // REG4 = b1[0] used
+
                 l1_sum = acc + $signed(b1_q);
                 if (l1_sum > 0)
                     hidden[hh] <= l1_sum[31:0];
@@ -342,11 +363,24 @@ endfunction
                     b2_addr_r <= 4'd0;
 
                     hscaled_q <= (hidden[6'd0] >>> SHIFT);
+                    // NEW: tag what we just issued
+                    
+                    dbg_acc0 <= hidden[6'd0];   // RAW hidden0 snapshot (pre-shift)
 
-                    state <= S_L2_WAIT; // prime for w2_q
+                    oo_issued <= 4'd0;
+                    hh_issued <= 6'd0;
+                    
+                    state <= S_L2_PRIME0; // prime for w2_q
                 end
             end
-
+            
+      // tryna match delays
+S_L2_PRIME0: begin
+    w2_en_r <= 1'b1;
+    b2_en_r <= 1'b1;
+    // burn 1 cycle: do NOT latch w2_use/hs_use here
+    state <= S_L2_WAIT;
+end
 // ====================================================
 // LAYER 2: WAIT (prime ROM)
 // ====================================================
@@ -358,8 +392,11 @@ S_L2_WAIT: begin
     // Latch aligned operands for the CURRENT (oo, hh)
     // At this point, w2_q corresponds to w2_addr_r issued earlier,
     // and hscaled_q corresponds to the same hh that was issued.
-    w2_use <= w2_q;
+    w2_use <= $signed(w2_dout);
     hs_use <= hscaled_q;
+
+    oo_use_tag <= oo_issued;
+    hh_use_tag <= hh_issued;
 
     state <= S_L2_MAC;
 end
@@ -373,11 +410,12 @@ S_L2_MAC: begin
     acc <= acc_use_next;
 
     // Debug for output 0 only
-    if (oo == 4'd0) begin
-        if (hh == 6'd0) begin
-            dbg_w2_00      <= hs_use;        // REG7 = HW hs0
-            dbg_partial4_o0  <= {{24{w2_use[7]}}, w2_use}; // REG6 = HW w2_used sign-extended to 32
-            end
+     if (oo_use_tag == 4'd0 && hh_use_tag == 6'd0) begin
+        // dbg_acc0   <= {{28{1'b0}}, oo_use_tag};          // REG5 = oo tag
+        //dbg_score0 <= {{26{1'b0}}, hh_use_tag};          // REG4 = hh tag
+
+        //dbg_partial4_o0 <= {{23{1'b0}}, w2_addr_used};   // REG6 = w2_addr used (0..319)
+        dbg_w2_00       <= {{24{w2_use[7]}}, w2_use};    // REG7 = w2_used (sign-extended)
     end
 
     if (hh == H-1) begin
@@ -392,7 +430,9 @@ S_L2_MAC: begin
 
         // Prepare matching hidden_scaled for that next hh
         hscaled_q <= (hidden[hh + 6'd1] >>> SHIFT);
-
+        // NEW: tag what we just issued
+        oo_issued <= oo;
+        hh_issued <= hh + 6'd1;
         state <= S_L2_WAIT;
     end
 end
@@ -406,11 +446,9 @@ end
                 // score = acc + b2[o]
                 // update argmax
                 // Capture HW logit for class 0 only (debug)
-                if (oo == 4'd0) begin
-                    dbg_acc0   <= acc[31:0];
-                    dbg_b20    <= b2_q[31:0];
-                    dbg_score0 <= score64[31:0];
-                end
+                //if (oo == 4'd0) begin
+               //     dbg_score0 <= score64[31:0];
+               // end
 
                 // update argmax using the same score64
                 if (score64 > best_val) begin
@@ -431,6 +469,8 @@ end
                     b2_addr_r <= (oo + 4'd1);
 
                     hscaled_q <= (hidden[6'd0] >>> SHIFT);
+                    oo_issued <= oo + 4'd1;
+                    hh_issued <= 6'd0;
 
                     state <= S_L2_WAIT;
                 end else begin

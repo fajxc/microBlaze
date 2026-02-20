@@ -195,3 +195,30 @@ platform clean
 platform generate
 platform clean
 platform generate
+platform config -updatehw {C:/ENEL400/microBlaze/hw/microV/oo_hh_tags.xsa}
+platform clean
+platform generate
+platform clean
+platform generate
+platform config -updatehw {C:/ENEL400/microBlaze/hw/microV/226pm.xsa}
+platform clean
+platform generate
+platform clean
+platform generate
+platform config -updatehw {C:/ENEL400/microBlaze/hw/microV/addr.xsa}
+platform clean
+platform generate
+platform clean
+platform generate
+platform config -updatehw {C:/ENEL400/microBlaze/hw/microV/548.xsa}
+platform clean
+platform generate
+platform clean
+platform generate
+platform config -updatehw {C:/ENEL400/microBlaze/hw/microV/dwag.xsa}
+platform clean
+platform generate
+platform clean
+platform generate
+platform config -updatehw {C:/ENEL400/microBlaze/hw/microV/10.xsa}
+platform config -updatehw {C:/ENEL400/microBlaze/hw/microV/10.xsa}
