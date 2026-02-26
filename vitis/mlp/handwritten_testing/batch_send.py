@@ -11,50 +11,64 @@ INPUT_SIZE = 784
 CHUNK_SIZE = 32
 
 
-def pad_to_square(img: np.ndarray) -> np.ndarray:
-    h, w = img.shape[:2]
-    s = max(h, w)
-    out = np.zeros((s, s), dtype=img.dtype)
-    y0 = (s - h) // 2
-    x0 = (s - w) // 2
-    out[y0:y0 + h, x0:x0 + w] = img
-    return out
-
-
-def preprocess_mnist_style(image_path: Path) -> np.ndarray:
-    img_bgr = cv2.imread(str(image_path), cv2.IMREAD_COLOR)
-    if img_bgr is None:
+def preprocess_mnist_uart_best(image_path: Path) -> np.ndarray:
+    gray = cv2.imread(str(image_path), cv2.IMREAD_GRAYSCALE)
+    if gray is None:
         raise FileNotFoundError(f"Could not read image: {image_path}")
-
-    gray = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2GRAY)
+    # Mild denoise (helps with camera / rough PNGs)
     blur = cv2.GaussianBlur(gray, (5, 5), 0)
-
-    _, bw = cv2.threshold(blur, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
-
-    border = np.concatenate([bw[0, :], bw[-1, :], bw[:, 0], bw[:, -1]])
-    border_mean = float(np.mean(border))
-
-    proc = bw.copy()
-    if border_mean > 127:
-        proc = 255 - proc
-
-    proc = cv2.medianBlur(proc, 3)
-
-    contours, _ = cv2.findContours(proc, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-
+    # Otsu mask ONLY for locating digit (not final pixel values)
+    _, mask = cv2.threshold(blur, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+    # Invert decision based on border of the mask.
+    # We want: background dark (0), digit bright (255-ish), like MNIST.
+    border = np.concatenate([mask[0, :], mask[-1, :], mask[:, 0], mask[:, -1]])
+    if float(np.mean(border)) > 127.0:
+        gray = 255 - gray
+        mask = 255 - mask
+    # Clean mask a bit so contour detection is stable
+    mask = cv2.medianBlur(mask, 3)
+    # Find largest connected component and crop (using mask),
+    # but crop the GRAYSCALE image (preserve intensities).
+    contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
     if contours:
         c = max(contours, key=cv2.contourArea)
         x, y, w, h = cv2.boundingRect(c)
-        roi = proc[y:y + h, x:x + w]
+        # Small padding around bbox to avoid cutting strokes
+        pad = 2
+        x0 = max(0, x - pad)
+        y0 = max(0, y - pad)
+        x1 = min(gray.shape[1], x + w + pad)
+        y1 = min(gray.shape[0], y + h + pad)
+        roi = gray[y0:y1, x0:x1]
     else:
-        roi = proc
-
-    padded = pad_to_square(roi)
-
-    resized20 = cv2.resize(padded, (20, 20), interpolation=cv2.INTER_AREA)
+        roi = gray
+    if roi.size == 0:
+        out28 = np.zeros((28, 28), dtype=np.uint8)
+        return out28.flatten()
+    # Pad ROI to square (keeps aspect ratio when resizing)
+    h, w = roi.shape
+    s = max(h, w)
+    square = np.zeros((s, s), dtype=np.uint8)
+    y_off = (s - h) // 2
+    x_off = (s - w) // 2
+    square[y_off:y_off + h, x_off:x_off + w] = roi
+    # Resize so digit fits in 20x20, then place into 28x28
+    resized20 = cv2.resize(square, (20, 20), interpolation=cv2.INTER_AREA)
     out28 = np.zeros((28, 28), dtype=np.uint8)
     out28[4:24, 4:24] = resized20
-
+    # Center-of-mass shift (helps MLP a lot)
+    m = cv2.moments(out28.astype(np.float32))
+    if m["m00"] > 1e-3:
+        cx = m["m10"] / m["m00"]
+        cy = m["m01"] / m["m00"]
+        shift_x = int(round(14.0 - cx))
+        shift_y = int(round(14.0 - cy))
+        M = np.float32([[1, 0, shift_x], [0, 1, shift_y]])
+        out28 = cv2.warpAffine(
+            out28, M, (28, 28),
+            flags=cv2.INTER_LINEAR,
+            borderValue=0
+        )
     return out28.flatten().astype(np.uint8)
 
 
@@ -76,7 +90,7 @@ def send_image(ser, image_path: Path):
     print(f"Testing: {image_path.name}")
     print(f"==============================")
 
-    img_flat = preprocess_mnist_style(image_path)
+    img_flat = preprocess_mnist_uart_best(image_path)
     image_bytes = img_flat.tobytes()
 
     # Clear buffer
@@ -130,7 +144,6 @@ def send_image(ser, image_path: Path):
 
 def main():
     base_path = Path(".")
-
     images = [base_path / f"digit{i}.png" for i in range(0, 10)]
 
     print("Opening serial port...")
