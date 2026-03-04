@@ -39,6 +39,10 @@ module nn_core #(
     output reg signed [31:0] dbg_w2_00,  // actual w2[0][0] seen (sign-extended)
     
     output reg  [3:0]  predicted
+    //reg4 = x0 (score)
+    //reg5 = h raw (acc0)
+    //reg6 = w1 (partial)
+    //reg7 = ____ (w2_00)
 );
 
     // ============================================================
@@ -147,7 +151,20 @@ reg [3:0] oo_issued;
 // tags for what operands we are ABOUT TO USE (latched in WAIT)
 reg [5:0] hh_use_tag;
 reg [3:0] oo_use_tag;
-    
+
+// -------- Layer 1: EXACT same tag+wait-latch scheme as Layer 2 --------
+// tags for what w1 address/x we ISSUED
+reg [5:0] l1_hh_issued;
+reg [9:0] l1_ii_issued;
+
+// tags for what operands we are ABOUT TO USE (latched in S_L1_WAIT)
+reg [5:0] l1_hh_use;
+reg [9:0] l1_ii_use;
+
+// latched aligned operands (like w2_use/hs_use)
+reg signed [7:0] w1_use;
+reg [7:0]        x_use;    
+
     reg signed [63:0] l1_sum;
 
     reg signed [63:0] acc;        // wide accumulator
@@ -166,8 +183,8 @@ reg [3:0] oo_use_tag;
 
     // Multipliers (signed weights, unsigned x, signed hidden_scaled)
     wire signed [7:0]  w1_now  = $signed(w1_dout);
-    wire signed [15:0] mul_w1x = w1_now * $signed({1'b0, x_q});
-    wire signed [39:0] mul_w2h = w2_q * $signed(hscaled_q_d1);          // int8 * int32
+    wire signed [15:0] mul_w1x_use = $signed(w1_use) * $signed({1'b0, x_use}); // int8 * uint8
+    wire signed [39:0] mul_w2h     = w2_q * $signed(hscaled_q_d1);
     
     
     // Layer 2 score for current output neuron (logit)
@@ -198,6 +215,7 @@ reg [3:0] oo_use_tag;
                S_L2_FINISHO  = 4'd8,
                 
                S_DONE        = 4'd9,
+               S_L1_PRIME0   = 4'd11,
                S_L2_PRIME0  = 4'd10;
 
     reg [3:0] state;
@@ -222,6 +240,13 @@ hh_issued  <= 6'd0;
 oo_issued  <= 4'd0;
 hh_use_tag <= 6'd0;
 oo_use_tag <= 4'd0;
+
+l1_hh_issued <= 6'd0;
+l1_ii_issued <= 10'd0;
+l1_hh_use    <= 6'd0;
+l1_ii_use    <= 10'd0;
+w1_use       <= 8'sd0;
+x_use        <= 8'd0;
             
 
             b1_en_r <= 1'b0; w1_en_r <= 1'b0; w2_en_r <= 1'b0; b2_en_r <= 1'b0;
@@ -270,31 +295,51 @@ oo_use_tag <= 4'd0;
 
                     // latch matching x for the address we just issued
                     x_q <= x_mem[10'd0];
-
-                    state <= S_L1_WAIT; // wait 1 cycle for w1_q to become valid
+                    
+                    l1_hh_issued <= 6'd0;
+                    l1_ii_issued <= 10'd0;
+                    
+                    state <= S_L1_PRIME0; // wait 1 cycle for w1_q to become valid
                 end
             end
+S_L1_PRIME0: begin
+    // keep ROMs enabled and burn 1 cycle so w1_dout isn't stale/0
+    w1_en_r <= 1'b1;
+    b1_en_r <= 1'b1;
+    state   <= S_L1_WAIT;
+end
 
             // ====================================================
             // LAYER 1: WAIT (prime ROM)
             // ====================================================
             S_L1_WAIT: begin
-                // keep ROMs enabled (safe)
-                w1_en_r <= 1'b1;
-                b1_en_r <= 1'b1;
-                state <= S_L1_MAC;
-            end
+    // keep ROMs enabled
+    w1_en_r <= 1'b1;
+    b1_en_r <= 1'b1;
+
+    // Latch aligned operands for the CURRENT (hh, ii)
+    // EXACTLY like L2: w2_use <= w2_dout; hs_use <= hscaled_q; tags <= issued
+    w1_use <= $signed(w1_dout);   // use registered BRAM output (1-cycle aligned)
+    x_use  <= x_q;    // pixel paired with issued ii
+    l1_hh_use <= l1_hh_issued;
+    l1_ii_use <= l1_ii_issued;
+
+    state <= S_L1_MAC;
+end
 
             // ====================================================
             // LAYER 1: MAC
             // ====================================================
             S_L1_MAC: begin
-                // accumulate using the weight/data from the address issued 1 cycle ago
-                acc <= acc + $signed({{48{mul_w1x[15]}}, mul_w1x});
-                if (hh == 6'd0 && ii == 10'd0) begin
-                    dbg_score0       <= {24'd0, x_q};                 // REG4: x0 used
-                    dbg_partial4_o0  <= {{24{w1_now[7]}}, w1_now};    // REG6: w1_00 used
-                end
+    // Accumulate exactly one term for current (hh,ii) using latched operands
+    acc <= acc + $signed({{48{mul_w1x_use[15]}}, mul_w1x_use});
+
+// TEMP DEBUG: capture w1[0][0], w1[0][1], w1[0][2] using the SAME w1_use used in MAC
+if (l1_hh_use == 6'd0) begin
+    if (l1_ii_use == 10'd3) dbg_score0 <= {{24{w1_use[7]}}, w1_use};        // REG4 = w1[0][0]
+//    if (l1_ii_use == 10'd1) dbg_acc0   <= {{24{w1_use[7]}}, w1_use};        // REG5 = w1[0][1]
+//    if (l1_ii_use == 10'd2) dbg_partial4_o0 <= {{24{w1_use[7]}}, w1_use};   // REG6 = w1[0][2]
+end
                 if (ii < N_IN-1) begin
                     // issue next address and latch its x
                     ii <= ii + 10'd1;
@@ -303,9 +348,10 @@ oo_use_tag <= 4'd0;
                     w1_addr_r <= w1_index(hh, ii + 10'd1);
 
                     x_q <= x_mem[ii + 10'd1];
-
+l1_hh_issued <= hh;
+l1_ii_issued <= ii + 10'd1;
                     // stay in MAC (pipeline continues, no extra waits)
-                    state <= S_L1_MAC;
+                    state <= S_L1_PRIME0;
                 end else begin
                     // finished dot-product for this hidden neuron
                     state <= S_L1_FINISH;
@@ -319,7 +365,7 @@ oo_use_tag <= 4'd0;
                 // bias is in b1_q (address set at start of this hh)
                 // friend does int32 accum; we clamp by truncating to 32 after ReLU
                 // ReLU
-                if (hh == 6'd0) dbg_score0 <= b1_q;   // REG4 = b1[0] used
+                //if (hh == 6'd0) dbg_score0 <= b1_q;   // REG4 = b1[0] used
 
                 l1_sum = acc + $signed(b1_q);
                 if (l1_sum > 0)
@@ -336,7 +382,8 @@ oo_use_tag <= 4'd0;
                     // set next addresses
                     w1_en_r   <= 1'b1;
                     w1_addr_r <= w1_index(hh + 6'd1, 10'd0);
-
+l1_hh_issued <= hh + 6'd1;
+l1_ii_issued <= 10'd0;
                     b1_en_r   <= 1'b1;
                     b1_addr_r <= hh + 6'd1;
 
@@ -349,7 +396,7 @@ oo_use_tag <= 4'd0;
                     hh <= 6'd0;
                     acc <= 64'sd0;
 
-                    dbg_partial4_o0 <= 32'sd0;
+                    //dbg_partial4_o0 <= 32'sd0;
                     dbg_w2_00       <= 32'sd0;
 
                     best_val <= -64'sd9223372036854775807;
@@ -365,7 +412,7 @@ oo_use_tag <= 4'd0;
                     hscaled_q <= (hidden[6'd0] >>> SHIFT);
                     // NEW: tag what we just issued
                     
-                    dbg_acc0 <= hidden[6'd0];   // RAW hidden0 snapshot (pre-shift)
+                    //dbg_acc0 <= hidden[6'd0];   // RAW hidden0 snapshot (pre-shift)
 
                     oo_issued <= 4'd0;
                     hh_issued <= 6'd0;
@@ -410,13 +457,11 @@ S_L2_MAC: begin
     acc <= acc_use_next;
 
     // Debug for output 0 only
-     if (oo_use_tag == 4'd0 && hh_use_tag == 6'd0) begin
-        // dbg_acc0   <= {{28{1'b0}}, oo_use_tag};          // REG5 = oo tag
-        //dbg_score0 <= {{26{1'b0}}, hh_use_tag};          // REG4 = hh tag
-
-        //dbg_partial4_o0 <= {{23{1'b0}}, w2_addr_used};   // REG6 = w2_addr used (0..319)
-        dbg_w2_00       <= {{24{w2_use[7]}}, w2_use};    // REG7 = w2_used (sign-extended)
-    end
+if (oo_use_tag == 4'd0) begin
+    //if (hh_use_tag == 6'd3) dbg_score0 <= {{24{w2_use[7]}}, w2_use};
+    if (hh_use_tag == 6'd3) dbg_acc0   <= {{24{w2_use[7]}}, w2_use};
+    if (hh_use_tag == 6'd4) dbg_partial4_o0 <= {{24{w2_use[7]}}, w2_use};
+end
 
     if (hh == H-1) begin
         // finished final h term
@@ -433,7 +478,7 @@ S_L2_MAC: begin
         // NEW: tag what we just issued
         oo_issued <= oo;
         hh_issued <= hh + 6'd1;
-        state <= S_L2_WAIT;
+        state <= S_L2_PRIME0;
     end
 end
 

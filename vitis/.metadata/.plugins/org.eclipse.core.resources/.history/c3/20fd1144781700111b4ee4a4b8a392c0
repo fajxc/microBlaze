@@ -113,7 +113,6 @@ static void print_debug_min(u32 hw_pred)
     const int32_t sw_w2_00  = (int32_t)w2[0][0];
 
     // addresses
-    const int32_t sw_w1_00  = (int32_t)w1[0][0];
     const int32_t sw_w1_01  = (int32_t)w1[0][1];
     const int32_t sw_w1_02  = (int32_t)w1[0][2];
     const int32_t sw_w2_03  = (int32_t)w2[0][3];

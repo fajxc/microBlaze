@@ -95,7 +95,8 @@ int mlp_inference(const uint8_t* img) {
     return argmax(output_layer, OUTPUT_SIZE);
 }
 
-
+// REG7 = HW hs_used (scaled hidden used in multiply for o=0,h=0)
+// REG6 = HW w2_used (weight used in multiply for o=0,h=0), sign-extended to int32 in RTL
 static inline int32_t arshift8(int32_t x) { return x >> 8; } // arithmetic shift on signed int32
 
 static void print_debug_min(u32 hw_pred)
@@ -108,16 +109,9 @@ static void print_debug_min(u32 hw_pred)
 
     // ---- SW reference ----
     const int32_t sw_x0     = (int32_t)input_image[0];
-    const int32_t sw_w1_03  = (int32_t)w1[0][3];
+    const int32_t sw_w1_00  = (int32_t)w1[0][0];
     const int32_t sw_raw_h0 = hidden_layer[0];        // <-- IMPORTANT: you had hidden_layer[1] (bug)
     const int32_t sw_w2_00  = (int32_t)w2[0][0];
-
-    // addresses
-    const int32_t sw_w1_00  = (int32_t)w1[0][0];
-    const int32_t sw_w1_01  = (int32_t)w1[0][1];
-    const int32_t sw_w1_02  = (int32_t)w1[0][2];
-    const int32_t sw_w2_03  = (int32_t)w2[0][3];
-    const int32_t sw_w2_04  = (int32_t)w2[0][4];
 
     xil_printf(
         "DBG | x0  SW=%d HW=%d | w1_00 SW=%d HW=%d | raw_h0 SW=%d HW=%d | w2_use HW=%d SW=%d\r\n",
@@ -127,32 +121,60 @@ static void print_debug_min(u32 hw_pred)
         hw_w2_use, sw_w2_00
     );
 
-    xil_printf(
-        "ADD W1| 03  SW=%d HW=%d | 01 SW=%d HW=%d | 02 SW=%d HW=%d | w2_use HW=%d SW=%d\r\n",
-        sw_w1_03, hw_x0,
-        sw_w1_01, hw_raw_h0,
-        sw_w1_02, hw_w1_00,
-        hw_w2_use, sw_w2_00
-    );
-
-    xil_printf(
-        "ADD W2| 00  SW=%d HW=%d | 03 SW=%d HW=%d | 04 SW=%d HW=%d | w2_use HW=%d SW=%d\r\n",
-        sw_w2_00, hw_x0,
-        sw_w2_03, hw_raw_h0,
-        sw_w2_04, hw_w1_00,
-        hw_w2_use, sw_w2_00
-    );
-
-
+    // Optional: keep this if useful
+    xil_printf("DBG | SW logit[HWpred]=%d\r\n", output_layer[hw_pred]);
 }
 
 
+static void run_fixed_input_test(void) {
+    xil_printf("=== FIXED INPUT TEST ===\r\n");
 
+    for (int run = 0; run < 3; run++) {
+        for (u32 idx = 0; idx < 784u; idx++)
+            nn_write_pixel(idx, 0u);
+        nn_write_pixel(0u, 255u);
+
+        nn_start_pulse();
+        u32 status  = nn_wait_done();
+        u32 hw_pred = (status >> 4) & 0xFu;
+
+        memset(input_image, 0, INPUT_SIZE);
+        input_image[0] = 255;
+        int sw_pred = mlp_inference(input_image);
+
+        // HW debug AFTER done
+        //int32_t hw_logit0 = (int32_t)Xil_In32(REG4);
+        //int32_t hw_acc0   = (int32_t)Xil_In32(REG5);
+
+        int32_t sw_logit0 = output_layer[0];
+        int32_t sw_acc0   = sw_logit0 - (int32_t)b2[0];
+
+        //xil_printf("DBG: HW acc0=%d HW logit0=%d | SW acc0=%d SW logit0=%d\r\n",
+                //   hw_acc0, hw_logit0, sw_acc0, sw_logit0);
+
+        print_l2_debug_min(hw_pred);
+
+        xil_printf("Run %d: HW:%u SW:%u %s\r\n",
+                   run,
+                   (unsigned)hw_pred,
+                   (unsigned)sw_pred,
+                   (hw_pred == (u32)sw_pred) ? "MATCH" : "MISMATCH");
+    }
+
+    xil_printf("SW hidden[0..7] for fixed input: ");
+    for (int i = 0; i < 8; i++)
+        xil_printf("%d ", hidden_layer[i]);
+    xil_printf("\r\n");
+
+    xil_printf("=== END FIXED INPUT TEST ===\r\n");
+}
 
 int main(void) {
     xil_printf("\r\n=== HW vs SW COMPARISON TEST ===\r\n");
     Xil_Out32(REG0, 0u);
     usleep(1000);
+
+    run_fixed_input_test();
 
     while (1) {
         xil_printf("\r\nCMD? (1=send image, 4=menu)\r\n");
@@ -185,12 +207,29 @@ int main(void) {
 
         int sw_pred = mlp_inference(input_image);
 
+        // HW debug AFTER done
+        //int32_t hw_logit0 = (int32_t)Xil_In32(REG4);
+        //int32_t hw_acc0   = (int32_t)Xil_In32(REG5);
+
+        int32_t sw_logit0 = output_layer[0];
+        int32_t sw_acc0   = sw_logit0 - (int32_t)b2[0];
+
+        //xil_printf("DBG: HW acc0=%d HW logit0=%d | SW acc0=%d SW logit0=%d\r\n",
+                   //hw_acc0, hw_logit0, sw_acc0, sw_logit0);
 
         // Minimal layer2 debug that isolates pairing
-        print_debug_min(hw_pred);
+        print_l2_debug_min(hw_pred);
+
+        //xil_printf("SW logits: ");
+        //for (int o = 0; o < 10; o++) xil_printf("%d ", output_layer[o]);
+        //xil_printf("\r\nSW pred=%d\r\n", sw_pred);
+
         xil_printf("HW PRED:%u SW PRED:%u\r\n", (unsigned)hw_pred, (unsigned)sw_pred);
-        xil_printf("PRED:%u\r\n", (unsigned)sw_pred);
 
+        //xil_printf("SW hidden[0..7]: ");
+        //for (int i = 0; i < 8; i++) xil_printf("%d ", hidden_layer[i]);
+        //xil_printf("\r\n");
 
+        //xil_printf("SW PRED:%u\r\n", (unsigned)sw_pred);
     }
 }

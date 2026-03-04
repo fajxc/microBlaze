@@ -108,16 +108,15 @@ static void print_debug_min(u32 hw_pred)
 
     // ---- SW reference ----
     const int32_t sw_x0     = (int32_t)input_image[0];
-    const int32_t sw_w1_03  = (int32_t)w1[0][3];
+    const int32_t sw_w1_00  = (int32_t)w1[0][0];
     const int32_t sw_raw_h0 = hidden_layer[0];        // <-- IMPORTANT: you had hidden_layer[1] (bug)
     const int32_t sw_w2_00  = (int32_t)w2[0][0];
 
     // addresses
-    const int32_t sw_w1_00  = (int32_t)w1[0][0];
     const int32_t sw_w1_01  = (int32_t)w1[0][1];
     const int32_t sw_w1_02  = (int32_t)w1[0][2];
-    const int32_t sw_w2_03  = (int32_t)w2[0][3];
-    const int32_t sw_w2_04  = (int32_t)w2[0][4];
+    const int32_t sw_w2_01  = (int32_t)w2[0][1];
+    const int32_t sw_w2_02  = (int32_t)w2[0][2];
 
     xil_printf(
         "DBG | x0  SW=%d HW=%d | w1_00 SW=%d HW=%d | raw_h0 SW=%d HW=%d | w2_use HW=%d SW=%d\r\n",
@@ -128,18 +127,18 @@ static void print_debug_min(u32 hw_pred)
     );
 
     xil_printf(
-        "ADD W1| 03  SW=%d HW=%d | 01 SW=%d HW=%d | 02 SW=%d HW=%d | w2_use HW=%d SW=%d\r\n",
-        sw_w1_03, hw_x0,
+        "ADD W1| 00  SW=%d HW=%d | 01 SW=%d HW=%d | 02 SW=%d HW=%d | w2_use HW=%d SW=%d\r\n",
+        sw_w1_00, hw_x0,
         sw_w1_01, hw_raw_h0,
         sw_w1_02, hw_w1_00,
         hw_w2_use, sw_w2_00
     );
 
     xil_printf(
-        "ADD W2| 00  SW=%d HW=%d | 03 SW=%d HW=%d | 04 SW=%d HW=%d | w2_use HW=%d SW=%d\r\n",
+        "ADD W2| 00  SW=%d HW=%d | 01 SW=%d HW=%d | 02 SW=%d HW=%d | w2_use HW=%d SW=%d\r\n",
         sw_w2_00, hw_x0,
-        sw_w2_03, hw_raw_h0,
-        sw_w2_04, hw_w1_00,
+        sw_w2_01, hw_raw_h0,
+        sw_w2_02, hw_w1_00,
         hw_w2_use, sw_w2_00
     );
 

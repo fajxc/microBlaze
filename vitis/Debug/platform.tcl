@@ -52,3 +52,73 @@ platform clean
 platform generate
 platform clean
 platform generate
+platform config -updatehw {C:/ENEL400/microBlaze/hw/microV/poopshit.xsa}
+platform clean
+platform generate
+platform clean
+platform generate
+platform config -updatehw {C:/ENEL400/microBlaze/hw/microV/433am.xsa}
+platform clean
+platform generate
+platform clean
+platform generate
+platform config -updatehw {C:/ENEL400/microBlaze/hw/microV/ispathded.xsa}
+platform clean
+platform generate
+platform clean
+platform generate
+platform config -updatehw {C:/ENEL400/microBlaze/hw/microV/dfgfdgfdgdfgdfgdfgd.xsa}
+platform clean
+platform generate
+platform clean
+platform generate
+platform config -updatehw {C:/ENEL400/microBlaze/hw/microV/daiper.xsa}
+platform clean
+platform generate
+platform clean
+platform generate
+platform config -updatehw {C:/ENEL400/microBlaze/hw/microV/lasttry_620am.xsa}
+platform clean
+platform generate
+platform clean
+platform generate
+platform config -updatehw {C:/ENEL400/microBlaze/hw/microV/top.xsa}
+platform clean
+platform generate
+platform clean
+platform generate
+platform config -updatehw {C:/ENEL400/microBlaze/hw/microV/march3.xsa}
+platform clean
+platform generate
+platform clean
+platform generate
+platform config -updatehw {C:/ENEL400/microBlaze/hw/microV/3reads.xsa}
+platform clean
+platform generate
+platform clean
+platform generate
+platform config -updatehw {C:/ENEL400/microBlaze/hw/microV/1.xsa}
+platform clean
+platform generate
+platform clean
+platform generate
+platform config -updatehw {C:/ENEL400/microBlaze/hw/microV/testfinal.xsa}
+platform clean
+platform generate
+platform clean
+platform generate
+platform config -updatehw {C:/ENEL400/microBlaze/hw/microV/w2_checck.xsa}
+platform clean
+platform generate
+platform clean
+platform generate
+platform config -updatehw {C:/ENEL400/microBlaze/hw/microV/checDUPE.xsa}
+platform clean
+platform generate
+platform clean
+platform generate
+platform config -updatehw {C:/ENEL400/microBlaze/hw/microV/primed.xsa}
+platform clean
+platform generate
+platform clean
+platform generate

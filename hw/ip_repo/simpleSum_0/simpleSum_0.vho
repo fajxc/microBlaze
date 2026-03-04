@@ -46,7 +46,7 @@
 -- 
 -- DO NOT MODIFY THIS FILE.
 -- IP VLNV: xilinx.com:user:simpleSum:1.0
--- IP Revision: 49
+-- IP Revision: 70
 
 -- The following code must appear in the VHDL architecture header.
 
