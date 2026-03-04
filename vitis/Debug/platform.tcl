@@ -122,3 +122,9 @@ platform clean
 platform generate
 platform clean
 platform generate
+platform config -updatehw {C:/ENEL400/microBlaze/hw/microV/cleaned.xsa}
+platform generate
+platform clean
+platform generate
+platform clean
+platform generate

@@ -125,12 +125,11 @@ def send_image_uart(ser, image_flat, verbose=True):
                     if verbose:
                         print(f"FPGA: {line}")
                     
-                    if line.startswith("PRED:"):
-                        pred_str = line.split(':')[1]
-                        prediction = int(pred_str)
-                        return prediction
-                    elif line.startswith("HW:") or line.startswith("SW"):
-                        print(f"DEBUG: {line}")
+                    if line.startswith("HW PRED:"):
+                        parts = line.split()
+                        hw_pred = int(parts[1].split(':')[1])
+                        sw_pred = int(parts[3].split(':')[1])
+                        return hw_pred, sw_pred
             except Exception as e:
                 if verbose:
                     print(f"Parse error: {e}")
@@ -239,13 +238,15 @@ def interactive_mode(ser, images, labels):
                 
                 # Send image
                 image_flat = images[idx].flatten()
-                prediction = send_image_uart(ser, image_flat)
-                
-                if prediction is not None:
-                    correct = "✓ CORRECT" if prediction == labels[idx] else "✗ WRONG"
-                    print(f"\nResult: Pred={prediction}, True={labels[idx]} {correct}")
+                result = send_image_uart(ser, image_flat, verbose=True)
+
+                if result is not None:
+                    hw_pred, sw_pred = result
+                    if hw_pred == labels[idx]: hw_correct += 1
+                    if sw_pred == labels[idx]: sw_correct += 1
+                    print(f"HW: {hw_pred} SW: {sw_pred} True: {labels[idx]}")
                 else:
-                    print("\nFailed to get prediction")
+                    print("✗ Failed to get prediction")
                 
                 # Read any remaining responses
                 time.sleep(0.5)
@@ -257,7 +258,6 @@ def interactive_mode(ser, images, labels):
                 print(f"Error: {e}")
                 
         elif cmd.startswith('r'):
-            # Test random images
             try:
                 parts = cmd.split()
                 n = int(parts[1]) if len(parts) > 1 else 5
@@ -268,28 +268,26 @@ def interactive_mode(ser, images, labels):
                 
                 indices = np.random.choice(len(images), size=min(n, len(images)), replace=False)
                 
-                correct = 0
+                hw_correct = 0
+                sw_correct = 0
                 total = 0
                 
                 for i, idx in enumerate(indices):
                     print(f"\n--- Image {i+1}/{n} (index {idx}) ---")
                     print(f"True label: {labels[idx]}")
                     
-                    # Send command
                     send_command(ser, '1')
                     time.sleep(0.5)
                     
-                    # Send image
                     image_flat = images[idx].flatten()
-                    prediction = send_image_uart(ser, image_flat, verbose=True)
+                    result = send_image_uart(ser, image_flat, verbose=True)
                     
-                    if prediction is not None:
+                    if result is not None:
+                        hw_pred, sw_pred = result
                         total += 1
-                        if prediction == labels[idx]:
-                            correct += 1
-                            print(f"✓ Correct: {prediction}")
-                        else:
-                            print(f"✗ Wrong: predicted {prediction}, true {labels[idx]}")
+                        if hw_pred == labels[idx]: hw_correct += 1
+                        if sw_pred == labels[idx]: sw_correct += 1
+                        print(f"HW: {hw_pred} SW: {sw_pred} True: {labels[idx]}")
                     else:
                         print("✗ Failed to get prediction")
                     
@@ -297,8 +295,8 @@ def interactive_mode(ser, images, labels):
                 
                 print(f"\n{'='*50}")
                 if total > 0:
-                    accuracy = 100.0 * correct / total
-                    print(f"Accuracy: {correct}/{total} = {accuracy:.2f}%")
+                    print(f"HW Accuracy: {hw_correct}/{total} = {100*hw_correct/total:.2f}%")
+                    print(f"SW Accuracy: {sw_correct}/{total} = {100*sw_correct/total:.2f}%")
                 else:
                     print("No successful predictions")
                 print(f"{'='*50}")

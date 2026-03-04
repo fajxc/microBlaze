@@ -5,22 +5,24 @@
 #include "xparameters.h"
 #include "xil_types.h"
 #include <stdint.h>
-#include <string.h>
 
 #include "weights_w1.h"
 #include "weights_b1.h"
 #include "weights_w2.h"
 #include "weights_b2.h"
 
-#define BASE 0x44A00000
-#define REG0 (BASE + 0x00)
-#define REG1 (BASE + 0x04)
-#define REG2 (BASE + 0x08)
-#define REG3 (BASE + 0x0C)
-#define REG4 (BASE + 0x10) // now: dbg_score0 this is the b1
-#define REG5 (BASE + 0x14) // now: h raw
-#define REG6 (BASE + 0x18)  // partial (now w1)
-#define REG7 (BASE + 0x1C)  // now: HW hs_used for (o=0,h=0)
+// ============================================================
+// AXI Register Map
+// ============================================================
+#define BASE  0x44A00000
+#define REG0  (BASE + 0x00)  // start pulse
+#define REG1  (BASE + 0x04)  // pixel data
+#define REG2  (BASE + 0x08)  // pixel address
+#define REG3  (BASE + 0x0C)  // status / done / predicted
+#define REG4  (BASE + 0x10)  // dbg_score0      (reserved)
+#define REG5  (BASE + 0x14)  // dbg_acc0        (reserved)
+#define REG6  (BASE + 0x18)  // dbg_partial4_o0 (reserved)
+#define REG7  (BASE + 0x1C)  // dbg_w2_00       (reserved)
 
 #ifndef UART_BASE
 #define UART_BASE XPAR_UARTLITE_0_BASEADDR
@@ -30,10 +32,16 @@
 #define HIDDEN_SIZE 32
 #define OUTPUT_SIZE 10
 
-uint8_t  input_image[INPUT_SIZE];
-int32_t  hidden_layer[HIDDEN_SIZE];
-int32_t  output_layer[OUTPUT_SIZE];
+// ============================================================
+// Buffers
+// ============================================================
+static uint8_t  input_image[INPUT_SIZE];
+static int32_t  hidden_layer[HIDDEN_SIZE];
+static int32_t  output_layer[OUTPUT_SIZE];
 
+// ============================================================
+// UART / Hardware Helpers
+// ============================================================
 static inline u8 uart_getc_blocking(void) {
     while (XUartLite_IsReceiveEmpty(UART_BASE)) {}
     return Xil_In8(UART_BASE + XUL_RX_FIFO_OFFSET);
@@ -51,37 +59,35 @@ static inline void nn_start_pulse(void) {
 }
 
 static inline u32 nn_wait_done(void) {
-    while (Xil_In32(REG3) & 0x1u) {}
-    while ((Xil_In32(REG3) & 0x1u) == 0u) {}
+    while ( Xil_In32(REG3) & 0x1u)        {}  // wait for done to deassert
+    while ((Xil_In32(REG3) & 0x1u) == 0u) {}  // wait for done to assert
     return Xil_In32(REG3);
 }
 
-// Software MLP
+// ============================================================
+// Software MLP (reference)
+// ============================================================
 static inline int32_t relu(int32_t x) { return (x > 0) ? x : 0; }
 
-void layer1_forward(const uint8_t* input, int32_t* output) {
+static void layer1_forward(const uint8_t* input, int32_t* output) {
     for (int h = 0; h < HIDDEN_SIZE; h++) {
         int32_t accum = 0;
         for (int i = 0; i < INPUT_SIZE; i++)
             accum += (int32_t)w1[h][i] * (int32_t)input[i];
-        accum += b1[h];
-        output[h] = relu(accum);
+        output[h] = relu(accum + b1[h]);
     }
 }
 
-void layer2_forward(const int32_t* hidden, int32_t* output) {
+static void layer2_forward(const int32_t* hidden, int32_t* output) {
     for (int o = 0; o < OUTPUT_SIZE; o++) {
         int32_t accum = 0;
-        for (int h = 0; h < HIDDEN_SIZE; h++) {
-            int32_t hidden_scaled = hidden[h] / 256;
-            accum += (int32_t)w2[o][h] * hidden_scaled;
-        }
-        accum += b2[o];
-        output[o] = accum;
+        for (int h = 0; h < HIDDEN_SIZE; h++)
+            accum += (int32_t)w2[o][h] * (hidden[h] / 256);
+        output[o] = accum + b2[o];
     }
 }
 
-int argmax(const int32_t* array, int length) {
+static int argmax(const int32_t* array, int length) {
     int max_idx = 0;
     int32_t max_val = array[0];
     for (int i = 1; i < length; i++)
@@ -89,77 +95,26 @@ int argmax(const int32_t* array, int length) {
     return max_idx;
 }
 
-int mlp_inference(const uint8_t* img) {
+static int mlp_inference(const uint8_t* img) {
     layer1_forward(img, hidden_layer);
     layer2_forward(hidden_layer, output_layer);
     return argmax(output_layer, OUTPUT_SIZE);
 }
 
-
-static inline int32_t arshift8(int32_t x) { return x >> 8; } // arithmetic shift on signed int32
-
-static void print_debug_min(u32 hw_pred)
-{
-    // ---- HW reads (after DONE) ----
-    const int32_t hw_x0     = (int32_t)Xil_In32(REG4); // dbg_score0 = x0 used
-    const int32_t hw_raw_h0 = (int32_t)Xil_In32(REG5); // dbg_acc0 or raw h0 (whatever you mapped)
-    const int32_t hw_w1_00  = (int32_t)Xil_In32(REG6); // dbg_partial4_o0 = w1_00 used (sign-extended)
-    const int32_t hw_w2_use = (int32_t)Xil_In32(REG7); // your current "w2_used" debug reg
-
-    // ---- SW reference ----
-    const int32_t sw_x0     = (int32_t)input_image[0];
-    const int32_t sw_w1_03  = (int32_t)w1[0][3];
-    const int32_t sw_raw_h0 = hidden_layer[0];        // <-- IMPORTANT: you had hidden_layer[1] (bug)
-    const int32_t sw_w2_00  = (int32_t)w2[0][0];
-
-    // addresses
-    const int32_t sw_w1_00  = (int32_t)w1[0][0];
-    const int32_t sw_w1_01  = (int32_t)w1[0][1];
-    const int32_t sw_w1_02  = (int32_t)w1[0][2];
-    const int32_t sw_w2_03  = (int32_t)w2[0][3];
-    const int32_t sw_w2_04  = (int32_t)w2[0][4];
-
-    xil_printf(
-        "DBG | x0  SW=%d HW=%d | w1_00 SW=%d HW=%d | raw_h0 SW=%d HW=%d | w2_use HW=%d SW=%d\r\n",
-        sw_x0, hw_x0,
-        sw_w1_00, hw_w1_00,
-        sw_raw_h0, hw_raw_h0,
-        hw_w2_use, sw_w2_00
-    );
-
-    xil_printf(
-        "ADD W1| 03  SW=%d HW=%d | 01 SW=%d HW=%d | 02 SW=%d HW=%d | w2_use HW=%d SW=%d\r\n",
-        sw_w1_03, hw_x0,
-        sw_w1_01, hw_raw_h0,
-        sw_w1_02, hw_w1_00,
-        hw_w2_use, sw_w2_00
-    );
-
-    xil_printf(
-        "ADD W2| 00  SW=%d HW=%d | 03 SW=%d HW=%d | 04 SW=%d HW=%d | w2_use HW=%d SW=%d\r\n",
-        sw_w2_00, hw_x0,
-        sw_w2_03, hw_raw_h0,
-        sw_w2_04, hw_w1_00,
-        hw_w2_use, sw_w2_00
-    );
-
-
-}
-
-
-
-
+// ============================================================
+// Main
+// ============================================================
 int main(void) {
-    xil_printf("\r\n=== HW vs SW COMPARISON TEST ===\r\n");
+    xil_printf("\r\n=== NN Core: HW vs SW Inference ===\r\n");
     Xil_Out32(REG0, 0u);
     usleep(1000);
 
     while (1) {
-        xil_printf("\r\nCMD? (1=send image, 4=menu)\r\n");
+        xil_printf("\r\nCMD? (1=run inference, 4=menu)\r\n");
         u8 cmd = uart_getc_blocking();
 
         if (cmd == '4') {
-            xil_printf("1: Send image\r\n4: Menu\r\n");
+            xil_printf("1: Run inference\r\n4: Menu\r\n");
             continue;
         }
         if (cmd != '1') {
@@ -167,30 +122,28 @@ int main(void) {
             continue;
         }
 
+        // Flush UART buffer before receiving image
         while (!XUartLite_IsReceiveEmpty(UART_BASE))
             (void)Xil_In8(UART_BASE + XUL_RX_FIFO_OFFSET);
 
         xil_printf("READY\r\n");
 
-        for (u32 idx = 0; idx < 784u; idx++) {
+        // Receive 784 pixels and write to HW pixel buffer
+        for (u32 idx = 0; idx < INPUT_SIZE; idx++) {
             u8 px = uart_getc_blocking();
             input_image[idx] = px;
             nn_write_pixel(idx, px);
         }
 
+        // Run HW inference
         nn_start_pulse();
         u32 status  = nn_wait_done();
-        xil_printf("STATUS=0x%08x\r\n", (unsigned)status);
         u32 hw_pred = (status >> 4) & 0xFu;
 
+        // Run SW inference
         int sw_pred = mlp_inference(input_image);
 
-
-        // Minimal layer2 debug that isolates pairing
-        print_debug_min(hw_pred);
         xil_printf("HW PRED:%u SW PRED:%u\r\n", (unsigned)hw_pred, (unsigned)sw_pred);
         xil_printf("PRED:%u\r\n", (unsigned)sw_pred);
-
-
     }
 }
