@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <section name="Workbench">
 	<item key="scw_hwspec" value="C:\ENEL400\microBlaze\hw\microV"/>
-	<item key="scw_hwspec_file_selection" value="C:\ENEL400\microBlaze\hw\microV"/>
+	<item key="scw_hwspec_file_selection" value="C:\Users\User\Downloads\ActualFinalDemoLast\microBlaze_with_Cam\microBlaze\hw\microV"/>
+	<item key="debug_files_selection" value="C:\ENEL400\microBlaze_with_Cam\microBlaze\hw\microV"/>
 </section>

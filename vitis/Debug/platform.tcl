@@ -128,3 +128,139 @@ platform clean
 platform generate
 platform clean
 platform generate
+platform clean
+platform generate
+platform clean
+platform generate
+platform clean
+platform generate
+platform clean
+platform generate
+bsp reload
+bsp config clocking "true"
+bsp write
+bsp reload
+catch {bsp regenerate}
+platform generate
+bsp reload
+bsp reload
+platform clean
+platform clean
+platform generate
+platform clean
+platform generate
+platform active {Debug}
+platform config -updatehw {C:/ENEL_400/CameraTest/CameraTest/microBlaze/hw/microV/april3_microV.xsa}
+platform generate
+platform clean
+platform clean
+platform generate
+platform clean
+platform clean
+platform generate
+platform config -updatehw {C:/ENEL_400/CameraTest/CameraTest/microBlaze/hw/microV/april4_camera.xsa}
+platform clean
+platform clean
+platform generate
+platform clean
+platform clean
+platform generate
+platform config -updatehw {C:/ENEL_400/CameraTest/CameraTest/microBlaze/hw/microV/april4_microV.xsa}
+platform clean
+platform clean
+platform generate
+platform clean
+platform clean
+platform generate
+platform config -updatehw {C:/ENEL_400/CameraTest/CameraTest/microBlaze/hw/microV/april4_camera.xsa}
+platform config -updatehw {C:/ENEL_400/CameraTest/CameraTest/microBlaze/hw/microV/april4_camera.xsa}
+platform config -updatehw {C:/ENEL_400/CameraTest/CameraTest/microBlaze/hw/microV/april4_microV.xsa}
+platform config -updatehw {C:/ENEL_400/CameraTest/CameraTest/microBlaze/hw/microV/april4_microV.xsa}
+platform config -updatehw {C:/ENEL_400/CameraTest/CameraTest/microBlaze/hw/microV/april3_microV.xsa}
+platform active {Debug}
+platform config -updatehw {C:/ENEL_400/CameraTest/CameraTest/microBlaze/hw/microV/april4_microV.xsa}
+platform config -updatehw {C:/ENEL_400/CameraTest/CameraTest/microBlaze/hw/microV/primed.xsa}
+platform config -updatehw {C:/ENEL_400/CameraTest/CameraTest/microBlaze/hw/microV/april3_microV.xsa}
+platform config -updatehw {C:/ENEL_400/CameraTest/CameraTest/microBlaze/hw/microV/april4_microV.xsa}
+platform config -updatehw {C:/ENEL_400/CameraTest/CameraTest/microBlaze/hw/microV/april3_microV.xsa}
+platform config -updatehw {C:/ENEL_400/CameraTest/CameraTest/microBlaze/hw/microV/primed.xsa}
+platform config -updatehw {C:/ENEL_400/CameraTest/CameraTest/microBlaze/hw/microV/cleaned.xsa}
+platform config -updatehw {C:/ENEL_400/CameraTest/CameraTest/microBlaze/hw/microV/april4_microV.xsa}
+platform config -updatehw {C:/ENEL_400/CameraTest/CameraTest/microBlaze/hw/microV/april3_microV.xsa}
+platform config -updatehw {C:/ENEL_400/CameraTest/CameraTest/microBlaze/hw/microV/march3.xsa}
+platform config -updatehw {C:/ENEL_400/CameraTest/CameraTest/microBlaze/hw/microV/april3_microV.xsa}
+platform config -updatehw {C:/ENEL_400/CameraTest/CameraTest/microBlaze/hw/microV/testfinal.xsa}
+platform config -updatehw {C:/ENEL_400/CameraTest/CameraTest/microBlaze/hw/microV/april3_microV.xsa}
+platform config -updatehw {C:/ENEL_400/CameraTest/CameraTest/microBlaze/hw/microV/april4_camera.xsa}
+platform generate
+platform generate -domains standalone_domain 
+platform generate -domains standalone_domain 
+platform active {Debug}
+catch {platform remove platform}
+platform config -updatehw {C:/ENEL_400/CameraTest/CameraTest/microBlaze/hw/microV/apr4_new.xsa}
+platform clean
+platform active {Debug}
+platform clean
+platform generate
+platform clean
+platform generate -domains standalone_domain 
+platform clean
+platform generate -domains standalone_domain 
+platform clean
+platform active {Debug}
+platform generate
+platform clean
+platform generate
+platform config -updatehw {C:/ENEL400/microBlaze_with_Cam/microBlaze/hw/microV/apr4_new.xsa}
+platform config -updatehw {C:/ENEL400/microBlaze_with_Cam/microBlaze/hw/microV/top1.xsa}
+platform clean
+platform generate
+platform config -updatehw {C:/ENEL400/microBlaze_with_Cam/microBlaze/hw/microV/Fajar.xsa}
+platform generate
+platform clean
+platform generate
+platform active {Debug}
+platform config -updatehw {C:/ENEL400/microBlaze_with_Cam/microBlaze/hw/microV/784.xsa}
+platform clean
+platform generate
+platform clean
+platform generate
+platform active {Debug}
+platform config -updatehw {C:/ENEL400/microBlaze_with_Cam/microBlaze/hw/microV/newpreprocess.xsa}
+platform clean
+platform generate
+platform config -updatehw {C:/ENEL400/microBlaze_with_Cam/microBlaze/hw/microV/uart_teststtsets.xsa}
+platform clean
+platform generate
+platform clean
+platform generate
+platform config -updatehw {C:/ENEL400/microBlaze_with_Cam/microBlaze/hw/microV/1231321313.xsa}
+platform clean
+platform generate
+platform clean
+platform generate
+platform config -updatehw {C:/ENEL400/microBlaze_with_Cam/microBlaze/hw/microV/km,s.xsa}
+platform generate
+platform config -updatehw {C:/ENEL400/microBlaze_with_Cam/microBlaze/hw/microV/newProcess.xsa}
+platform clean
+platform generate
+platform active {Debug}
+platform config -updatehw {C:/ENEL400/microBlaze_with_Cam/microBlaze/hw/microV/TestingDynamic.xsa}
+platform clean
+platform generate
+platform clean
+platform generate
+platform config -updatehw {C:/ENEL400/microBlaze_with_Cam/microBlaze/hw/microV/topstatic.xsa}
+platform clean
+platform generate
+platform active {Debug}
+platform config -updatehw {C:/ENEL400/microBlaze_with_Cam/microBlaze/hw/microV/newUItest.xsa}
+platform clean
+platform generate
+platform config -updatehw {C:/ENEL400/microBlaze_with_Cam/microBlaze/hw/microV/FINALFORDEMO.xsa}
+platform clean
+platform generate
+platform active {Debug}
+platform config -updatehw {C:/Users/User/Downloads/ActualFinalDemoLast/microBlaze_with_Cam/microBlaze/hw/microV/last_test.xsa}
+platform clean
+platform generate

@@ -6,6 +6,7 @@ BEGIN OS
  PARAMETER OS_NAME = standalone
  PARAMETER OS_VER = 9.2
  PARAMETER PROC_INSTANCE = microblaze_riscv_0
+ PARAMETER clocking = true
  PARAMETER stdin = axi_uartlite_0
  PARAMETER stdout = axi_uartlite_0
 END

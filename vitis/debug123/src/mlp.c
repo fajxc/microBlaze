@@ -4,6 +4,7 @@
 #include "xuartlite_l.h"
 #include "xparameters.h"
 #include "xil_types.h"
+#include "xpseudo_asm_gcc.h"
 #include <stdint.h>
 
 #include "weights_w1.h"
@@ -40,6 +41,15 @@ static int32_t  hidden_layer[HIDDEN_SIZE];
 static int32_t  output_layer[OUTPUT_SIZE];
 
 // ============================================================
+// Timing Helpers
+// Uses rdtime(), which your BSP already uses for RISC-V timing.
+// No extra Vivado IP required.
+// ============================================================
+static inline uint32_t time_to_us(uint32_t ticks) {
+    return (uint32_t)(((uint64_t)ticks * 1000000ULL) / XPAR_MICROBLAZE_RISCV_CORE_CLOCK_FREQ_HZ);
+}
+
+// ============================================================
 // UART / Hardware Helpers
 // ============================================================
 static inline u8 uart_getc_blocking(void) {
@@ -59,8 +69,8 @@ static inline void nn_start_pulse(void) {
 }
 
 static inline u32 nn_wait_done(void) {
-    while ( Xil_In32(REG3) & 0x1u)        {}  // wait for done to deassert
-    while ((Xil_In32(REG3) & 0x1u) == 0u) {}  // wait for done to assert
+    while ( Xil_In32(REG3) & 0x1u)        {}
+    while ((Xil_In32(REG3) & 0x1u) == 0u) {}
     return Xil_In32(REG3);
 }
 
@@ -110,40 +120,60 @@ int main(void) {
     usleep(1000);
 
     while (1) {
-        xil_printf("\r\nCMD? (1=run inference, 4=menu)\r\n");
+        xil_printf("\r\nCMD? (1=both, 2=hw only, 3=sw only, 4=menu)\r\n");
         u8 cmd = uart_getc_blocking();
 
         if (cmd == '4') {
-            xil_printf("1: Run inference\r\n4: Menu\r\n");
+            xil_printf("1: Both\r\n2: HW only\r\n3: SW only\r\n4: Menu\r\n");
             continue;
         }
-        if (cmd != '1') {
+        if (cmd != '1' && cmd != '2' && cmd != '3') {
             xil_printf("Unknown cmd '%c'\r\n", cmd);
             continue;
         }
 
-        // Flush UART buffer before receiving image
         while (!XUartLite_IsReceiveEmpty(UART_BASE))
             (void)Xil_In8(UART_BASE + XUL_RX_FIFO_OFFSET);
 
         xil_printf("READY\r\n");
 
-        // Receive 784 pixels and write to HW pixel buffer
         for (u32 idx = 0; idx < INPUT_SIZE; idx++) {
             u8 px = uart_getc_blocking();
             input_image[idx] = px;
-            nn_write_pixel(idx, px);
+            if (cmd == '1' || cmd == '2')
+                nn_write_pixel(idx, px);
         }
 
-        // Run HW inference
-        nn_start_pulse();
-        u32 status  = nn_wait_done();
-        u32 hw_pred = (status >> 4) & 0xFu;
+        u32 hw_pred = 0;
+        int sw_pred = 0;
 
-        // Run SW inference
-        int sw_pred = mlp_inference(input_image);
+        if (cmd == '1' || cmd == '2') {
+            uint32_t t0 = rdtime();
+            u32 status = 0;
 
-        xil_printf("HW PRED:%u SW PRED:%u\r\n", (unsigned)hw_pred, (unsigned)sw_pred);
-        xil_printf("PRED:%u\r\n", (unsigned)sw_pred);
+            nn_start_pulse();
+            status = nn_wait_done();
+
+            uint32_t t1 = rdtime();
+            uint32_t hw_time_us = time_to_us(t1 - t0);
+
+            hw_pred = (status >> 4) & 0xFu;
+            xil_printf("HW TIME US:%u\r\n", hw_time_us);
+            xil_printf("HW PRED:%u\r\n", (unsigned)hw_pred);
+        }
+
+        if (cmd == '1' || cmd == '3') {
+            uint32_t t0 = rdtime();
+            sw_pred = mlp_inference(input_image);
+            uint32_t t1 = rdtime();
+            uint32_t sw_time_us = time_to_us(t1 - t0);
+            xil_printf("SW TIME US:%u\r\n", sw_time_us);
+            xil_printf("SW PRED:%u\r\n", (unsigned)sw_pred);
+        }
+
+        if (cmd == '2')
+            xil_printf("PRED:%u\r\n", (unsigned)hw_pred);
+        else
+            xil_printf("PRED:%u\r\n", (unsigned)sw_pred);
     }
 }

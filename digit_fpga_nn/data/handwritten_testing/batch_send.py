@@ -99,21 +99,30 @@ def send_image(ser, image_path: Path):
         time.sleep(0.02)
     print("")
 
+    hw_pred = None
+    sw_pred = None
+    hw_time_us = None
+    sw_time_us = None
     start = time.time()
     while time.time() - start < 20.0:
         if ser.in_waiting:
             line = ser.readline().decode("utf-8", errors="ignore").strip()
             if line:
                 print(f"FPGA: {line}")
-            if line.startswith("HW PRED:"):
-                parts = line.split()
-                hw_pred = int(parts[1].split(':')[1])
-                sw_pred = int(parts[3].split(':')[1])
-                return hw_pred, sw_pred
+            if line.startswith("HW TIME US:"):
+                hw_time_us = int(line.split(":")[1])
+            elif line.startswith("SW TIME US:"):
+                sw_time_us = int(line.split(":")[1])
+            elif line.startswith("HW PRED:"):
+                hw_pred = int(line.split(":")[1])
+            elif line.startswith("SW PRED:"):
+                sw_pred = int(line.split(":")[1])
+            if hw_pred is not None and sw_pred is not None:
+                return hw_pred, sw_pred, hw_time_us, sw_time_us
         time.sleep(0.01)
 
     print("No prediction received.")
-    return None, None
+    return hw_pred, sw_pred, hw_time_us, sw_time_us
 
 
 def main():
@@ -127,6 +136,8 @@ def main():
     hw_correct = 0
     sw_correct = 0
     total = 0
+    hw_times = []
+    sw_times = []
 
     for true_label, img_path in enumerate(images):
         if not img_path.exists():
@@ -134,14 +145,20 @@ def main():
             continue
 
         try:
-            hw_pred, sw_pred = send_image(ser, img_path)
+            hw_pred, sw_pred, hw_us, sw_us = send_image(ser, img_path)
             if hw_pred is not None:
                 total += 1
                 if hw_pred == true_label: hw_correct += 1
                 if sw_pred == true_label: sw_correct += 1
                 hw_mark = "✓" if hw_pred == true_label else "✗"
                 sw_mark = "✓" if sw_pred == true_label else "✗"
-                print(f"HW: {hw_pred} {hw_mark}  SW: {sw_pred} {sw_mark}  True: {true_label}")
+                hw_ms = hw_us / 1000.0 if hw_us is not None else 0
+                sw_ms = sw_us / 1000.0 if sw_us is not None else 0
+                if hw_us is not None: hw_times.append(hw_ms)
+                if sw_us is not None: sw_times.append(sw_ms)
+                print(f"HW: {hw_pred} {hw_mark} ({hw_ms:.2f}ms)  "
+                      f"SW: {sw_pred} {sw_mark} ({sw_ms:.2f}ms)  "
+                      f"True: {true_label}")
             else:
                 print("Failed to get prediction")
         except Exception as e:
@@ -155,6 +172,11 @@ def main():
     if total > 0:
         print(f"HW Accuracy: {hw_correct}/{total} = {100*hw_correct/total:.2f}%")
         print(f"SW Accuracy: {sw_correct}/{total} = {100*sw_correct/total:.2f}%")
+        if hw_times:
+            print(f"HW Avg Time: {sum(hw_times)/len(hw_times):.2f}ms")
+        if sw_times:
+            print(f"SW Avg Time: {sum(sw_times)/len(sw_times):.2f}ms")
+            print(f"Speedup:     {sum(sw_times)/sum(hw_times):.1f}x" if hw_times else "")
     else:
         print("No successful predictions")
     print(f"{'='*50}")
