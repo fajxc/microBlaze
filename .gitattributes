@@ -1,4 +1,10 @@
-# GitHub Linguist: do not count packaged Vivado IP (VHDL/Verilog from blk_mem, templates, etc.)
-# toward the repo language bar. .gitignore does not affect language stats.
+# GitHub Linguist: exclude generated / tool output from the language bar (see linguist overrides docs).
+# Packaged Vivado IP (VHDL/Verilog templates, drivers, etc.)
 hw/ip_repo/blk_mem_gen_0/** linguist-generated
 hw/ip_repo/simpleSum_0/** linguist-generated
+
+# Vitis: BSP export, Xilinx libs, copied drivers (~100k+ lines C/H), ARM BSP .s assembly
+vitis/Debug/** linguist-generated
+
+# Eclipse / Vitis workspace metadata (includes *.sc scanner files misclassified as SuperCollider)
+vitis/.metadata/** linguist-generated
