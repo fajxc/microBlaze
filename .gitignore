@@ -35,3 +35,7 @@ hw/microV/
 
 # all software for now
 sw/
+
+#ip nonsense
+hw/ip_repo/simpleSum_0/
+hw/ip_repo/blk_mem_gen_0/
