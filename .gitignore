@@ -36,6 +36,15 @@ hw/microV/
 # all software for now
 sw/
 
-#ip nonsense
+# Packaged Vivado IP (ip_repo): templates + generated VHDL/Verilog (regenerate from .xci)
+hw/ip_repo/**/*.vho
+hw/ip_repo/**/*.veo
+hw/ip_repo/**/*.vhd
+hw/ip_repo/**/synth/
+hw/ip_repo/**/sim/
+hw/ip_repo/**/simulation/
+hw/ip_repo/**/example_designs/
+
+# ip_repo: whole IP trees you do not want versioned (optional; trim if you track these)
 hw/ip_repo/simpleSum_0/
 hw/ip_repo/blk_mem_gen_0/
