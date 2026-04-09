@@ -1,0 +1,4 @@
+# GitHub Linguist: do not count packaged Vivado IP (VHDL/Verilog from blk_mem, templates, etc.)
+# toward the repo language bar. .gitignore does not affect language stats.
+hw/ip_repo/blk_mem_gen_0/** linguist-generated
+hw/ip_repo/simpleSum_0/** linguist-generated
